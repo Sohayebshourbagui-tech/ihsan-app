@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import BottomNav from "../components/BottomNav";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -239,7 +240,7 @@ export default function HifzPage() {
   return (
     <>
       <style>{`::-webkit-scrollbar{display:none}`}</style>
-      <div style={{ minHeight:"100vh", background:"#f8f9fa" }}>
+      <div style={{ minHeight:"100vh", background:"#f8f9fa", paddingBottom:70 }}>
 
         {/* Navbar */}
         <nav style={{
@@ -513,6 +514,7 @@ export default function HifzPage() {
           <div style={{ height:20 }}/>
         </div>
       </div>
+      <BottomNav />
     </>
   );
 }

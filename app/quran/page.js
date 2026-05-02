@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import BottomNav from "../components/BottomNav";
 
 const G = "#1a8a4a";
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
@@ -591,6 +592,7 @@ export default function QuranPage() {
           </div>
         </main>
       </div>
+      <BottomNav />
     </>
   );
 }

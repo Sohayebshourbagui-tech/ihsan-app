@@ -1,25 +1,88 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import BottomNav from "./components/BottomNav";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
-
 const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
-const FEATURES = [
-  { emoji: "📖", name: "Quran",      href: "/quran",      bg: "#EBF5FF", circle: "#BFDBFE" },
-  { emoji: "🤲", name: "Duas",       href: "/duas",       bg: "#F5F0FF", circle: "#DDD6FE" },
-  { emoji: "🧭", name: "Qibla",      href: "/qibla",      bg: "#ECFDF5", circle: "#A7F3D0" },
-  { emoji: "📜", name: "Hadith",     href: "/hadith",     bg: "#FFFBEB", circle: "#FDE68A" },
-  { emoji: "📅", name: "Calendar",   href: "/calendar",   bg: "#FFF1F2", circle: "#FECDD3" },
-  { emoji: "🧠", name: "Quiz",       href: "/quiz",       bg: "#F0FDF4", circle: "#BBF7D0" },
-  { emoji: "📝", name: "Hifz",       href: "/hifz",       bg: "#EEF2FF", circle: "#C7D2FE" },
-  { emoji: "🎙️", name: "Recitation", href: "/recitation", bg: "#FFF7ED", circle: "#FED7AA" },
+const SURAHS = [
+  { n:1,  name:"Al-Fatihah"    }, { n:2,  name:"Al-Baqarah"   },
+  { n:3,  name:"Al-Imran"     }, { n:4,  name:"An-Nisa"       },
+  { n:5,  name:"Al-Maidah"    }, { n:6,  name:"Al-Anam"       },
+  { n:7,  name:"Al-Araf"      }, { n:8,  name:"Al-Anfal"      },
+  { n:9,  name:"At-Tawbah"    }, { n:10, name:"Yunus"         },
+  { n:11, name:"Hud"          }, { n:12, name:"Yusuf"         },
+  { n:13, name:"Ar-Rad"       }, { n:14, name:"Ibrahim"       },
+  { n:15, name:"Al-Hijr"      }, { n:16, name:"An-Nahl"       },
+  { n:17, name:"Al-Isra"      }, { n:18, name:"Al-Kahf"       },
+  { n:19, name:"Maryam"       }, { n:20, name:"Ta-Ha"         },
+  { n:21, name:"Al-Anbiya"    }, { n:22, name:"Al-Hajj"       },
+  { n:23, name:"Al-Muminun"   }, { n:24, name:"An-Nur"        },
+  { n:25, name:"Al-Furqan"    }, { n:26, name:"Ash-Shuara"    },
+  { n:27, name:"An-Naml"      }, { n:28, name:"Al-Qasas"      },
+  { n:29, name:"Al-Ankabut"   }, { n:30, name:"Ar-Rum"        },
+  { n:31, name:"Luqman"       }, { n:32, name:"As-Sajdah"     },
+  { n:33, name:"Al-Ahzab"     }, { n:34, name:"Saba"          },
+  { n:35, name:"Fatir"        }, { n:36, name:"Ya-Sin"        },
+  { n:37, name:"As-Saffat"    }, { n:38, name:"Sad"           },
+  { n:39, name:"Az-Zumar"     }, { n:40, name:"Ghafir"        },
+  { n:41, name:"Fussilat"     }, { n:42, name:"Ash-Shura"     },
+  { n:43, name:"Az-Zukhruf"   }, { n:44, name:"Ad-Dukhan"     },
+  { n:45, name:"Al-Jathiyah"  }, { n:46, name:"Al-Ahqaf"      },
+  { n:47, name:"Muhammad"     }, { n:48, name:"Al-Fath"       },
+  { n:49, name:"Al-Hujurat"   }, { n:50, name:"Qaf"           },
+  { n:51, name:"Ad-Dhariyat"  }, { n:52, name:"At-Tur"        },
+  { n:53, name:"An-Najm"      }, { n:54, name:"Al-Qamar"      },
+  { n:55, name:"Ar-Rahman"    }, { n:56, name:"Al-Waqiah"     },
+  { n:57, name:"Al-Hadid"     }, { n:58, name:"Al-Mujadilah"  },
+  { n:59, name:"Al-Hashr"     }, { n:60, name:"Al-Mumtahanah" },
+  { n:61, name:"As-Saf"       }, { n:62, name:"Al-Jumuah"     },
+  { n:63, name:"Al-Munafiqun" }, { n:64, name:"At-Taghabun"   },
+  { n:65, name:"At-Talaq"     }, { n:66, name:"At-Tahrim"     },
+  { n:67, name:"Al-Mulk"      }, { n:68, name:"Al-Qalam"      },
+  { n:69, name:"Al-Haqqah"    }, { n:70, name:"Al-Maarij"     },
+  { n:71, name:"Nuh"          }, { n:72, name:"Al-Jinn"       },
+  { n:73, name:"Al-Muzzammil" }, { n:74, name:"Al-Muddaththir"},
+  { n:75, name:"Al-Qiyamah"   }, { n:76, name:"Al-Insan"      },
+  { n:77, name:"Al-Mursalat"  }, { n:78, name:"An-Naba"       },
+  { n:79, name:"An-Naziat"    }, { n:80, name:"Abasa"         },
+  { n:81, name:"At-Takwir"    }, { n:82, name:"Al-Infitar"    },
+  { n:83, name:"Al-Mutaffifin"}, { n:84, name:"Al-Inshiqaq"   },
+  { n:85, name:"Al-Buruj"     }, { n:86, name:"At-Tariq"      },
+  { n:87, name:"Al-Ala"       }, { n:88, name:"Al-Ghashiyah"  },
+  { n:89, name:"Al-Fajr"      }, { n:90, name:"Al-Balad"      },
+  { n:91, name:"Ash-Shams"    }, { n:92, name:"Al-Layl"       },
+  { n:93, name:"Ad-Duha"      }, { n:94, name:"Ash-Sharh"     },
+  { n:95, name:"At-Tin"       }, { n:96, name:"Al-Alaq"       },
+  { n:97, name:"Al-Qadr"      }, { n:98, name:"Al-Bayyinah"   },
+  { n:99, name:"Az-Zalzalah"  }, { n:100,name:"Al-Adiyat"     },
+  { n:101,name:"Al-Qariah"    }, { n:102,name:"At-Takathur"   },
+  { n:103,name:"Al-Asr"       }, { n:104,name:"Al-Humazah"    },
+  { n:105,name:"Al-Fil"       }, { n:106,name:"Quraysh"       },
+  { n:107,name:"Al-Maun"      }, { n:108,name:"Al-Kawthar"    },
+  { n:109,name:"Al-Kafirun"   }, { n:110,name:"An-Nasr"       },
+  { n:111,name:"Al-Masad"     }, { n:112,name:"Al-Ikhlas"     },
+  { n:113,name:"Al-Falaq"     }, { n:114,name:"An-Nas"        },
 ];
 
-/* Repeating diamond + dot geometric pattern rendered as an SVG overlay */
+function parseMinutes(timeStr) {
+  const [h, m] = timeStr.split(" ")[0].split(":").map(Number);
+  return h * 60 + m;
+}
+
+function toAmPm(timeStr) {
+  const [h, m] = timeStr.split(" ")[0].split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+function nextPrayerFrom(timings) {
+  const cur = new Date().getHours() * 60 + new Date().getMinutes();
+  return PRAYERS.find((p) => parseMinutes(timings[p]) > cur) || PRAYERS[0];
+}
+
 function GeoPattern({ id, opacity = 0.12 }) {
   return (
     <svg
@@ -42,341 +105,303 @@ function GeoPattern({ id, opacity = 0.12 }) {
   );
 }
 
-function parseMinutes(timeStr) {
-  const [h, m] = timeStr.split(" ")[0].split(":").map(Number);
-  return h * 60 + m;
+function getLastMemorizingSurah() {
+  if (typeof window === "undefined") return null;
+  let best = null, bestCount = 0;
+  SURAHS.forEach(s => {
+    try {
+      const saved = localStorage.getItem(`hifz_${s.n}`);
+      if (!saved) return;
+      const arr = JSON.parse(saved);
+      const active = arr.filter(v => v > 0).length;
+      if (active > bestCount) {
+        bestCount = active;
+        const memorized = arr.filter(v => v === 2).length;
+        const inProgress = arr.filter(v => v === 1).length;
+        best = { ...s, memorized, inProgress, total: arr.length };
+      }
+    } catch {}
+  });
+  return best;
 }
-
-function toAmPm(timeStr) {
-  const [h, m] = timeStr.split(" ")[0].split(":").map(Number);
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-}
-
-function nextPrayerFrom(timings) {
-  const cur = new Date().getHours() * 60 + new Date().getMinutes();
-  return PRAYERS.find((p) => parseMinutes(timings[p]) > cur) || PRAYERS[0];
-}
-
-function Sk({ w = "100%", h = 14, radius = 4, dark = false }) {
-  return (
-    <div style={{
-      width: w, height: h, borderRadius: radius,
-      background: dark ? "rgba(255,255,255,0.2)" : "#efefef",
-    }} />
-  );
-}
-
-const gap = <div style={{ height: 10, background: "#f8f9fa" }} />;
 
 export default function Home() {
+  const router = useRouter();
+  const [query, setQuery]       = useState("");
   const [prayerData, setPrayerData] = useState(null);
-  const [city, setCity]             = useState("");
   const [prayerErr, setPrayerErr]   = useState("");
-  const [ayah, setAyah]             = useState(null);
-  const [hadith, setHadith]         = useState(null);
-  const [hadithErr, setHadithErr]   = useState(false);
+  const [lastSurah, setLastSurah]   = useState(null);
+  const [mounted, setMounted]       = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setLastSurah(getLastMemorizingSurah());
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) { setPrayerErr("Geolocation unavailable"); return; }
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude: lat, longitude: lon } }) => {
         try {
-          const [pRes, gRes] = await Promise.all([
-            fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4`),
-            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`),
-          ]);
-          const pJson = await pRes.json();
-          const gJson = await gRes.json();
-          setPrayerData(pJson.data);
-          const a = gJson.address || {};
-          setCity(a.city || a.town || a.county || a.state || "");
+          const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4`);
+          const json = await res.json();
+          setPrayerData(json.data);
         } catch { setPrayerErr("Could not load prayer times"); }
       },
-      () => setPrayerErr("Enable location to see prayer times"),
+      () => setPrayerErr("Enable location for prayer times"),
     );
   }, []);
 
-  useEffect(() => {
-    fetch("https://api.alquran.cloud/v1/ayah/random/editions/quran-uthmani,en.sahih")
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d.data)) setAyah(d.data); })
-      .catch(() => {});
-  }, []);
+  function handleAsk(e) {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) sessionStorage.setItem("scholarly_init_q", q);
+    router.push("/scholarly");
+  }
 
-  useEffect(() => {
-    fetch("https://random-hadith-generator.vercel.app/bukhari/")
-      .then(r => r.json())
-      .then(d => {
-        if (d.data?.hadith_english) setHadith(d.data);
-        else setHadithErr(true);
-      })
-      .catch(() => setHadithErr(true));
-  }, []);
-
-  const nextPrayer  = prayerData ? nextPrayerFrom(prayerData.timings) : null;
-  const arabicAyah  = ayah?.[0];
-  const englishAyah = ayah?.[1];
-  const hijri       = prayerData?.date?.hijri;
-  const hijriStr    = hijri ? `${hijri.day} ${hijri.month.en} ${hijri.year} AH` : "";
+  const nextPrayer = prayerData ? nextPrayerFrom(prayerData.timings) : null;
+  const hijri      = prayerData?.date?.hijri;
+  const hijriStr   = hijri ? `${hijri.day} ${hijri.month.en} ${hijri.year} AH` : "";
 
   return (
     <>
       <style>{`
-        .feat-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-        .feat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.10) !important; }
-        .feat-card:hover .feat-name { color: ${G} !important; }
-        .ask-btn { transition: all 0.15s ease; }
-        .ask-btn:hover { background: ${G} !important; color: #fff !important; }
+        .ask-input:focus { outline: none; }
+        .ask-input::placeholder { color: #a0aec0; }
+        .send-btn:hover:not(:disabled) { background: #157a3c !important; }
+        .practice-btn:hover { background: ${G} !important; color: #fff !important; }
         ::-webkit-scrollbar { display: none; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
+      <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
 
-        {/* ── Navbar ── */}
+        {/* ── Top bar ── */}
         <nav style={{
           background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
           width: "100%",
-          boxShadow: "0 2px 16px rgba(26,138,74,0.32)",
+          boxShadow: "0 2px 16px rgba(26,138,74,0.28)",
           position: "relative",
           overflow: "hidden",
         }}>
           <GeoPattern id="geoNav" opacity={0.13} />
           <div style={{
-            maxWidth: 680, margin: "0 auto", padding: "13px 20px 15px",
+            maxWidth: 680, margin: "0 auto", padding: "14px 20px 16px",
             display: "flex", alignItems: "center", justifyContent: "space-between",
             position: "relative", zIndex: 1,
           }}>
             <div>
-              <div style={{ color: "#fff", fontSize: 19, fontWeight: 700, lineHeight: 1.2 }}>
+              <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>
                 Ihsan <span style={{ fontFamily: "Amiri, serif", fontWeight: 400 }}>إحسان</span>
               </div>
-              <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 3, letterSpacing: "0.03em" }}>
-                {hijriStr}
-              </div>
+              {hijriStr && (
+                <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 3, letterSpacing: "0.03em" }}>
+                  {hijriStr}
+                </div>
+              )}
             </div>
-            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 22 }}>☽</span>
+            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 24 }}>☽</span>
           </div>
         </nav>
 
-        {/* ── Feed ── */}
-        <div style={{ maxWidth: 680, margin: "0 auto", paddingBottom: 60 }}>
+        <div style={{ maxWidth: 680, margin: "0 auto" }}>
 
-          {/* Prayer Times */}
-          <div style={{
-            background: `linear-gradient(135deg, #146e38 0%, ${G} 50%, ${G2} 100%)`,
-            padding: "22px 20px 20px",
-            boxShadow: "0 4px 20px rgba(26,138,74,0.22)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            <GeoPattern id="geoPrayer" opacity={0.09} />
-            <div style={{ position: "relative", zIndex: 1 }}>
-              {prayerErr ? (
-                <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", margin: 0 }}>{prayerErr}</p>
-              ) : !prayerData ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <Sk w={150} h={13} dark />
-                  <Sk w={220} h={38} radius={6} dark />
-                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-                    {PRAYERS.map(p => <Sk key={p} w="100%" h={52} radius={10} dark />)}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div style={{ marginBottom: 18 }}>
-                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.58)", textTransform: "uppercase", letterSpacing: "0.09em", fontWeight: 700, marginBottom: 5 }}>
-                      Next Prayer{city && ` · ${city}`}
-                    </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-                      <span style={{ fontSize: 38, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>{nextPrayer}</span>
-                      <span style={{ fontSize: 20, color: "rgba(255,255,255,0.78)", fontWeight: 500 }}>{toAmPm(prayerData.timings[nextPrayer])}</span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    {PRAYERS.map(p => {
-                      const active = p === nextPrayer;
-                      return (
-                        <div key={p} style={{
-                          flex: 1, padding: "10px 6px", borderRadius: 10, textAlign: "center",
-                          background: active ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.08)",
-                          border: `1px solid ${active ? "rgba(255,255,255,0.44)" : "rgba(255,255,255,0.12)"}`,
-                        }}>
-                          <div style={{ fontSize: 10, color: active ? "#fff" : "rgba(255,255,255,0.58)", fontWeight: active ? 700 : 400, marginBottom: 3 }}>{p}</div>
-                          <div style={{ fontSize: 12, color: active ? "#fff" : "rgba(255,255,255,0.72)", fontWeight: active ? 700 : 400 }}>{toAmPm(prayerData.timings[p])}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {gap}
-
-          {/* Features 4×2 */}
-          <div style={{ background: "#fff", padding: "18px 20px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 14 }}>Explore</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-              {FEATURES.map(({ emoji, name, href, bg, circle }) => (
-                <Link key={href} href={href} style={{ textDecoration: "none" }}>
-                  <div
-                    className="feat-card"
-                    style={{
-                      display: "flex", flexDirection: "column", alignItems: "center",
-                      gap: 9, padding: "16px 8px 14px",
-                      borderRadius: 14,
-                      background: bg,
-                      borderLeft: `3px solid ${G}28`,
-                      cursor: "pointer",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                    }}
-                  >
-                    <div style={{
-                      width: 42, height: 42, borderRadius: "50%",
-                      background: circle,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 20,
-                    }}>
-                      {emoji}
-                    </div>
-                    <span className="feat-name" style={{ fontSize: 12, fontWeight: 600, color: "#2a2a2a", textAlign: "center" }}>{name}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {gap}
-
-          {/* Ayah of the Day */}
-          <div style={{
-            background: "#fff",
-            borderLeft: `4px solid ${G}`,
-            padding: "20px 22px 20px 18px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            {/* Watermark quotation mark */}
-            <div style={{
-              position: "absolute", top: -8, right: 10,
-              fontSize: 140, fontFamily: "Amiri, serif",
-              color: G, opacity: 0.055, lineHeight: 1,
-              pointerEvents: "none", userSelect: "none",
-            }}>﴿</div>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 14, position: "relative" }}>
-              Ayah of the Day
+          {/* ── Scholarly.AI Prompt ── */}
+          <div style={{ padding: "28px 20px 20px" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>
+              Scholarly.Ai ✦
             </p>
-            {!arabicAyah ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                <Sk w="100%" h={22} />
-                <Sk w="80%"  h={22} />
-                <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 5 }}>
-                  <Sk w="100%" h={13} />
-                  <Sk w="70%"  h={13} />
-                </div>
-              </div>
-            ) : (
-              <>
-                <p style={{ fontFamily: "Amiri, serif", fontWeight: 400, fontSize: 24, direction: "rtl", textAlign: "right", lineHeight: 2.05, color: "#0d0d0d", marginBottom: 12, position: "relative" }}>
-                  {arabicAyah.text}
-                </p>
-                <p style={{ fontSize: 14, lineHeight: 1.72, color: "#606060", marginBottom: 10 }}>
-                  {englishAyah?.text}
-                </p>
-                <p style={{ fontSize: 12, fontWeight: 700, color: G }}>
-                  {arabicAyah.surah?.englishName} · {arabicAyah.surah?.number}:{arabicAyah.numberInSurah}
-                </p>
-              </>
-            )}
-          </div>
-
-          {gap}
-
-          {/* Hadith of the Day */}
-          <div style={{
-            background: "#fff",
-            borderLeft: `4px solid ${G}`,
-            padding: "20px 22px 20px 18px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            {/* Decorative calligraphy mark */}
-            <div style={{
-              position: "absolute", bottom: 10, right: 14,
-              fontFamily: "Amiri, serif",
-              fontSize: 52, color: G, opacity: 0.06, lineHeight: 1,
-              pointerEvents: "none", userSelect: "none",
-            }}>ﷺ</div>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 14 }}>
-              Hadith of the Day
+            <p style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 20, lineHeight: 1.25, letterSpacing: "-0.3px" }}>
+              Ask any Islamic question
             </p>
-            {hadithErr ? (
-              <p style={{ fontSize: 13, color: "#bbb", fontStyle: "italic" }}>Could not load hadith. Try again later.</p>
-            ) : !hadith ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <Sk w="95%"  h={13} />
-                <Sk w="100%" h={13} />
-                <Sk w="85%"  h={13} />
-                <Sk w="60%"  h={13} />
+            <form onSubmit={handleAsk} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <div style={{
+                flex: 1, display: "flex", alignItems: "center",
+                background: "#fff",
+                border: "2px solid #e5e7eb",
+                borderRadius: 14,
+                padding: "0 14px",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                transition: "border-color 0.2s",
+              }}
+                onFocusCapture={e => e.currentTarget.style.borderColor = G}
+                onBlurCapture={e => e.currentTarget.style.borderColor = "#e5e7eb"}
+              >
+                <input
+                  ref={inputRef}
+                  className="ask-input"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  placeholder="Ask any Islamic question..."
+                  style={{
+                    flex: 1, border: "none", background: "transparent",
+                    fontSize: 15, color: "#111827", padding: "14px 0",
+                    fontFamily: "inherit",
+                  }}
+                />
               </div>
-            ) : (
-              <>
-                {hadith.header && (
-                  <p style={{ fontSize: 12, color: "#aaa", fontStyle: "italic", marginBottom: 10, lineHeight: 1.5 }}>
-                    {hadith.header}
-                  </p>
-                )}
-                <p style={{ fontSize: 14, lineHeight: 1.82, color: "#444", marginBottom: 10 }}>
-                  {hadith.hadith_english}
-                </p>
-                <p style={{ fontSize: 12, fontWeight: 700, color: G }}>
-                  {hadith.bookName}{hadith.refno ? ` · ${hadith.refno}` : ""}
-                </p>
-              </>
-            )}
+              <button
+                type="submit"
+                className="send-btn"
+                style={{
+                  flexShrink: 0, width: 48, height: 48,
+                  background: G, color: "#fff",
+                  border: "none", borderRadius: 12,
+                  fontSize: 20, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 4px 14px rgba(26,138,74,0.35)",
+                  transition: "background 0.15s",
+                }}
+              >
+                ➤
+              </button>
+            </form>
           </div>
 
-          {gap}
+          <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />
 
-          {/* Scholarly AI Banner */}
-          <div style={{
-            background: `linear-gradient(135deg, #0d5e2e 0%, #146e38 45%, ${G} 100%)`,
-            margin: "0 16px",
-            borderRadius: 16,
-            padding: "24px 22px",
-            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
-            boxShadow: "0 6px 28px rgba(13,94,46,0.38)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            <GeoPattern id="geoScholar" opacity={0.13} />
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <p style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginBottom: 5, letterSpacing: "-0.2px" }}>
-                Scholarly.Ai <span style={{ fontSize: 14, opacity: 0.9 }}>✦</span>
-              </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", lineHeight: 1.5 }}>
-                Ask any Islamic question from authentic sources
-              </p>
-            </div>
-            <Link href="/scholarly" style={{ textDecoration: "none", flexShrink: 0, position: "relative", zIndex: 1 }}>
-              <div className="ask-btn" style={{
-                background: "#fff", color: G,
-                fontWeight: 700, fontSize: 13,
-                padding: "10px 20px", borderRadius: 22,
-                whiteSpace: "nowrap",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
+          {/* ── Continue Memorizing ── */}
+          <div style={{ padding: "20px 20px 0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
+              Hifz Progress
+            </p>
+            {mounted && lastSurah ? (
+              <div style={{
+                background: "#fff",
+                borderRadius: 16,
+                padding: "18px 18px 16px",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                border: `1px solid ${G}18`,
+                display: "flex", alignItems: "center", gap: 14,
               }}>
-                Ask →
+                <div style={{
+                  flexShrink: 0, width: 50, height: 50, borderRadius: 12,
+                  background: `linear-gradient(135deg, ${G}, ${G2})`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", fontSize: 22,
+                }}>📖</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", marginBottom: 2 }}>
+                    {lastSurah.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>
+                    {lastSurah.memorized} memorized · {lastSurah.inProgress} in progress
+                  </div>
+                  <div style={{ height: 5, background: "#f3f4f6", borderRadius: 999, overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%", borderRadius: 999,
+                      background: `linear-gradient(90deg, ${G}, ${G2})`,
+                      width: `${Math.round((lastSurah.memorized / lastSurah.total) * 100)}%`,
+                    }} />
+                  </div>
+                </div>
+                <a href="/hifz" style={{ textDecoration: "none", flexShrink: 0 }}>
+                  <div className="practice-btn" style={{
+                    background: "#ecfdf3", color: G,
+                    border: `1px solid ${G}30`,
+                    fontWeight: 700, fontSize: 12,
+                    padding: "9px 14px", borderRadius: 10,
+                    whiteSpace: "nowrap", cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}>
+                    Practice
+                  </div>
+                </a>
               </div>
-            </Link>
+            ) : (
+              <div style={{
+                background: "#fff",
+                borderRadius: 16,
+                padding: "18px 18px 16px",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                border: `1px solid ${G}18`,
+                display: "flex", alignItems: "center", gap: 14,
+              }}>
+                <div style={{
+                  flexShrink: 0, width: 50, height: 50, borderRadius: 12,
+                  background: "#f3f4f6",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 22,
+                }}>📖</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 3 }}>
+                    Start memorizing the Quran
+                  </div>
+                  <div style={{ fontSize: 12, color: "#9ca3af" }}>Track your hifz progress surah by surah</div>
+                </div>
+                <a href="/hifz" style={{ textDecoration: "none", flexShrink: 0 }}>
+                  <div className="practice-btn" style={{
+                    background: "#ecfdf3", color: G,
+                    border: `1px solid ${G}30`,
+                    fontWeight: 700, fontSize: 12,
+                    padding: "9px 14px", borderRadius: 10,
+                    whiteSpace: "nowrap", cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}>
+                    Begin
+                  </div>
+                </a>
+              </div>
+            )}
           </div>
 
           <div style={{ height: 20 }} />
+          <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />
+
+          {/* ── Prayer Times ── */}
+          <div style={{ padding: "20px 20px 0" }}>
+            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
+              Prayer Times
+            </p>
+            {prayerErr ? (
+              <div style={{ padding: "14px 16px", background: "#fff", borderRadius: 12, fontSize: 13, color: "#9ca3af" }}>
+                {prayerErr}
+              </div>
+            ) : !prayerData ? (
+              <div style={{
+                background: "#fff", borderRadius: 12, padding: "12px 16px",
+                display: "flex", gap: 8,
+              }}>
+                {PRAYERS.map(p => (
+                  <div key={p} style={{
+                    flex: 1, height: 44, borderRadius: 8,
+                    background: "#f3f4f6", animation: "pulse 1.5s infinite",
+                  }} />
+                ))}
+              </div>
+            ) : (
+              <div style={{
+                background: "#fff",
+                borderRadius: 12,
+                padding: "10px 10px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                display: "flex", gap: 6,
+              }}>
+                {PRAYERS.map(p => {
+                  const active = p === nextPrayer;
+                  return (
+                    <div key={p} style={{
+                      flex: 1, padding: "8px 4px", borderRadius: 8, textAlign: "center",
+                      background: active ? G : "transparent",
+                    }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, color: active ? "rgba(255,255,255,0.8)" : "#9ca3af", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                        {p}
+                      </div>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: active ? "#fff" : "#374151" }}>
+                        {toAmPm(prayerData.timings[p])}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div style={{ height: 24 }} />
 
         </div>
+
+        <BottomNav />
       </div>
     </>
   );

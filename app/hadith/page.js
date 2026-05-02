@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import BottomNav from "../components/BottomNav";
 
 const GREEN = "#1a8a4a";
 const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.06)";
@@ -110,7 +111,7 @@ export default function HadithPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
+    <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
       <nav
         style={{
           background: "linear-gradient(135deg, #16753d 0%, #1a8a4a 55%, #2ca45f 100%)",
@@ -338,6 +339,7 @@ export default function HadithPage() {
           ) : null}
         </section>
       </main>
+      <BottomNav />
     </div>
   );
 }

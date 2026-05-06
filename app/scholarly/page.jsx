@@ -6,7 +6,7 @@ import BottomNav from "../components/BottomNav";
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Suggested Questions ──────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
   "What did the Prophet ﷺ say about the importance of prayer?",
   "Are there hadiths about treating parents with kindness?",
@@ -16,35 +16,6 @@ const SUGGESTED_QUESTIONS = [
   "What hadiths guide us on caring for neighbors?",
 ];
 
-const MOCK_RESPONSES = [
-  {
-    text: `Bismillah. The Prophet ﷺ placed prayer as the second pillar of Islam, emphasizing it immediately after the declaration of faith [1].\n\nHe ﷺ said that the first matter a servant will be questioned about on the Day of Judgment is his prayer. If it is sound, all his deeds will be sound, and if corrupt, all will be corrupt [2].\n\nThe scholars note that this hadith establishes prayer as the criterion by which all other deeds are measured — making it the cornerstone of a believer's life.`,
-    citations: [
-      { id: 1, collection: "Sahih al-Bukhari", arabic_name: "صحيح البخاري", book: "Book of Faith", book_number: 2, hadith_number: 8, narrator: "Ibn Umar", grade: "Sahih", preview: "Islam is built upon five pillars..." },
-      { id: 2, collection: "Jami' at-Tirmidhi", arabic_name: "جامع الترمذي", book: "Book of Prayer", book_number: 2, hadith_number: 413, narrator: "Abu Hurairah", grade: "Sahih", preview: "The first matter a servant will be questioned..." },
-    ],
-  },
-  {
-    text: `Bismillah, dear seeker. The Prophet ﷺ said: "Your smiling in the face of your brother is an act of charity (sadaqah)" [1].\n\nThis narration is a beautiful example of how Islam elevates the simplest human gestures to acts of worship. The Prophet ﷺ enumerated many such acts — removing harm from the road, offering a kind word — as forms of sadaqah accessible to every believer regardless of wealth.\n\nThe scholars note that this hadith teaches that charity is not limited to money. Every act that brings another person joy carries spiritual reward with Allah.`,
-    citations: [
-      { id: 1, collection: "Jami' at-Tirmidhi", arabic_name: "جامع الترمذي", book: "Book of Righteousness", book_number: 27, hadith_number: 1956, narrator: "Abu Dharr al-Ghifari", grade: "Sahih", preview: "Your smiling in the face of your brother is charity..." },
-    ],
-  },
-  {
-    text: `Bismillah. The Prophet ﷺ placed kindness to parents immediately after worship of Allah, indicating its supreme importance [1].\n\nWhen asked which deed is most beloved to Allah, he ﷺ replied: "Prayer at its proper time." Then: "Kindness to parents." Then: "Jihad in the way of Allah" [2].\n\nThis ordering is profound — it places serving one's parents above even striving in the path of Allah. The scholars derive that for most believers in ordinary times, serving parents with sincerity is among the greatest acts of worship available to them.`,
-    citations: [
-      { id: 1, collection: "Sahih al-Bukhari", arabic_name: "صحيح البخاري", book: "Book of Good Manners", book_number: 78, hadith_number: 5971, narrator: "Abdullah ibn Masud", grade: "Sahih", preview: "Which deed is most beloved to Allah..." },
-      { id: 2, collection: "Sahih Muslim", arabic_name: "صحيح مسلم", book: "Book of Virtue", book_number: 45, hadith_number: 2549, narrator: "Abu Hurairah", grade: "Sahih", preview: "Kindness to parents comes after prayer..." },
-    ],
-  },
-  {
-    text: `Bismillah. The Prophet ﷺ said: "Seeking knowledge is an obligation upon every Muslim" [1].\n\nThis hadith, reported by Ibn Majah, is one of the most cited in Islamic scholarship. The word used — faridah — denotes a religious obligation, placing the pursuit of knowledge in the same category as prayer and fasting.\n\nScholars explain that the knowledge referred to here is primarily religious knowledge — understanding one's obligations to Allah. However, many scholars extend this to beneficial worldly knowledge that enables a person to fulfill their duties and serve their community [2].`,
-    citations: [
-      { id: 1, collection: "Sunan Ibn Majah", arabic_name: "سنن ابن ماجه", book: "Book of Sunnah", book_number: 1, hadith_number: 224, narrator: "Anas ibn Malik", grade: "Hasan", preview: "Seeking knowledge is an obligation upon every Muslim..." },
-      { id: 2, collection: "Riyad as-Salihin", arabic_name: "رياض الصالحين", book: "Book of Knowledge", book_number: 13, hadith_number: 1381, narrator: "Various", grade: "Sahih", preview: "When a man dies, his deeds come to an end except for three..." },
-    ],
-  },
-];
 
 const GRADE_COLORS = {
   Sahih: { bg: "#d1fae5", text: "#065f46", label: "Sahih · صحيح" },
@@ -285,7 +256,6 @@ export default function ScholarlyPage() {
   const [isLoading, setIsLoading]   = useState(false);
   const [streamingIdx, setStreamingIdx] = useState(null);
   const [inputFocused, setInputFocused] = useState(false);
-  const mockIndexRef   = useRef(0);
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
@@ -299,39 +269,58 @@ export default function ScholarlyPage() {
     setInput("");
     setIsLoading(true);
 
-    const userMsg = { role: "user", content: userText };
+    const userMsg     = { role: "user", content: userText };
     const updatedMsgs = [...messages, userMsg];
     setMessages(updatedMsgs);
 
     const assistantIdx = updatedMsgs.length;
-    const mock = MOCK_RESPONSES[mockIndexRef.current % MOCK_RESPONSES.length];
-    mockIndexRef.current++;
-
     setMessages(prev => [...prev, { role: "assistant", content: "", citations: [] }]);
     setStreamingIdx(assistantIdx);
 
-    const words = mock.text.split(" ");
-    let accumulated = "";
-    for (let i = 0; i < words.length; i++) {
-      accumulated += (i === 0 ? "" : " ") + words[i];
-      const snap = accumulated;
+    try {
+      const res  = await fetch("/api/scholarly", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ messages: updatedMsgs }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Request failed");
+
+      // Word-by-word animation
+      const words = (data.text || "").split(" ");
+      let accumulated = "";
+      for (let i = 0; i < words.length; i++) {
+        accumulated += (i === 0 ? "" : " ") + words[i];
+        const snap = accumulated;
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[assistantIdx] = { role: "assistant", content: snap, citations: [] };
+          return updated;
+        });
+        await new Promise(r => setTimeout(r, 18 + Math.random() * 16));
+      }
+
+      // Reveal citations after text finishes
       setMessages(prev => {
         const updated = [...prev];
-        updated[assistantIdx] = { role: "assistant", content: snap, citations: [] };
+        updated[assistantIdx] = { role: "assistant", content: data.text, citations: data.citations ?? [] };
         return updated;
       });
-      await new Promise(r => setTimeout(r, 25 + Math.random() * 20));
+    } catch (err) {
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[assistantIdx] = {
+          role: "assistant",
+          content: "I'm sorry, I'm unable to answer right now. Please try again in a moment.",
+          citations: [],
+        };
+        return updated;
+      });
+    } finally {
+      setIsLoading(false);
+      setStreamingIdx(null);
+      inputRef.current?.focus();
     }
-
-    setMessages(prev => {
-      const updated = [...prev];
-      updated[assistantIdx] = { role: "assistant", content: mock.text, citations: mock.citations };
-      return updated;
-    });
-
-    setIsLoading(false);
-    setStreamingIdx(null);
-    inputRef.current?.focus();
   }, [input, messages, isLoading]);
 
   useEffect(() => {

@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large static assets (SVG Mushaf pages — copy manually)
+/public/mushaf-pages/
+
+# claude internals
+.claude/
+
+# nohup output
+nohup.out

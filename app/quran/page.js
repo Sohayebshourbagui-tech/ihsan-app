@@ -4,45 +4,83 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
 
+// ── SVG page renderer ────────────────────────────────────────────────────────
+
+const svgCache = new Map();
+let translationsCache = null;
+let translationsLoading = false;
+const translationsCallbacks = [];
+
+function loadTranslations() {
+  if (translationsCache) return Promise.resolve(translationsCache);
+  return new Promise((resolve) => {
+    translationsCallbacks.push(resolve);
+    if (!translationsLoading) {
+      translationsLoading = true;
+      fetch("/translations/sahih.json")
+        .then(r => r.json())
+        .then(data => {
+          translationsCache = data;
+          translationsCallbacks.forEach(cb => cb(data));
+          translationsCallbacks.length = 0;
+        })
+        .catch(() => {
+          translationsCache = {};
+          translationsCallbacks.forEach(cb => cb({}));
+          translationsCallbacks.length = 0;
+        });
+    }
+  });
+}
+
+function SvgPage({ pageNum }) {
+  const [svgText, setSvgText] = useState(svgCache.get(pageNum) ?? null);
+
+  useEffect(() => {
+    if (svgCache.has(pageNum)) { setSvgText(svgCache.get(pageNum)); return; }
+    const file = String(pageNum).padStart(3, "0");
+    fetch(`/mushaf-pages/${file}.svg`)
+      .then(r => r.text())
+      .then(text => { svgCache.set(pageNum, text); setSvgText(text); })
+      .catch(() => setSvgText(null));
+  }, [pageNum]);
+
+  if (!svgText) {
+    return (
+      <div style={{
+        background: "#fbf8ee", border: "2px solid #1a8a4a", borderRadius: 8,
+        padding: 48, textAlign: "center", minHeight: 300,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <span style={{ color: "#78716c", fontFamily: "Amiri, serif", fontSize: 18 }}>
+          جارٍ التحميل…
+        </span>
+      </div>
+    );
+  }
+
+  const responsive = svgText
+    .replace(/\s+width="[^"]*"/, ' width="100%"')
+    .replace(/\s+height="[^"]*"/, "");
+
+  return (
+    <div style={{
+      background: "#fbf8ee", border: "2px solid #1a8a4a", borderRadius: 8,
+      overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+    }}
+      dangerouslySetInnerHTML={{ __html: responsive }}
+    />
+  );
+}
+
 const G = "#1a8a4a";
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
 const BISMILLAH_EN = "In the name of Allah, the Entirely Merciful, the Especially Merciful.";
 
-
-function WordSpan({ word, tooltip }) {
-  if (!tooltip) return <>{word}</>;
-  return (
-    <span className="word-wrap">
-      {word}
-      <span className="tooltip">{tooltip}</span>
-    </span>
-  );
+function toArabicIndic(n) {
+  return String(n).replace(/[0-9]/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
 }
 
-function AyahEndMarker({ n }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 26,
-        height: 26,
-        borderRadius: "50%",
-        border: `1.5px solid ${G}`,
-        color: G,
-        fontSize: 9,
-        fontFamily: "system-ui, sans-serif",
-        verticalAlign: "middle",
-        margin: "0 4px",
-        lineHeight: 1,
-        flexShrink: 0,
-      }}
-    >
-      {n}
-    </span>
-  );
-}
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState([]);
@@ -50,65 +88,37 @@ export default function QuranPage() {
   const [surahNum, setSurahNum] = useState(1);
   const [mode, setMode] = useState("verse");
 
-  const [arabic, setArabic] = useState(null);
-  const [transl, setTransl] = useState(null);
-  const [wordMap, setWordMap] = useState({});
-  const [loadingSurahs, setLoadingSurahs] = useState(true);
-  const [loadingContent, setLoadingContent] = useState(false);
+  const [arabic,       setArabic]       = useState(null);
+  const [translations, setTranslations] = useState(translationsCache);
+  const [loadingSurahs,   setLoadingSurahs]   = useState(true);
+  const [loadingContent,  setLoadingContent]  = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("https://api.alquran.cloud/v1/surah")
       .then((r) => r.json())
-      .then((d) => {
-        setSurahs(d.data);
-        setLoadingSurahs(false);
-      })
-      .catch(() => {
-        setError("Failed to load surah list.");
-        setLoadingSurahs(false);
-      });
+      .then((d) => { setSurahs(d.data); setLoadingSurahs(false); })
+      .catch(() => { setError("Failed to load surah list."); setLoadingSurahs(false); });
+  }, []);
+
+  useEffect(() => {
+    if (!translationsCache) loadTranslations().then(setTranslations);
   }, []);
 
   useEffect(() => {
     setLoadingContent(true);
     setError("");
     setArabic(null);
-    setTransl(null);
-    Promise.all([
-      fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`).then((r) => r.json()),
-      fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/en.sahih`).then((r) => r.json()),
-    ])
-      .then(([a, t]) => {
-        if (a.status !== "OK" || t.status !== "OK") throw new Error();
+    fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`)
+      .then((r) => r.json())
+      .then((a) => {
+        if (a.status !== "OK") throw new Error();
         setArabic(a.data);
-        setTransl(t.data);
       })
       .catch(() => setError("Failed to load surah content."))
       .finally(() => setLoadingContent(false));
   }, [surahNum]);
 
-  useEffect(() => {
-    setWordMap({});
-    fetch(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahNum}` +
-      `?words=true&word_fields=text_uthmani,translation_text&word_translation=true&per_page=300`
-    )
-      .then((r) => r.json())
-      .then((data) => {
-        const map = {};
-        (data.verses || []).forEach((verse) => {
-          map[verse.verse_number] = (verse.words || [])
-            .filter((w) => w.char_type_name !== "end")
-            .map((w) => ({
-              text: w.text_uthmani,
-              translation: w.translation_text || w.translation?.text || null,
-            }));
-        });
-        setWordMap(map);
-      })
-      .catch(() => {}); // silent — tooltips simply won't show if this fails
-  }, [surahNum]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -123,18 +133,9 @@ export default function QuranPage() {
 
   const meta = surahs.find((s) => s.number === surahNum);
   const ayahsAr = arabic?.ayahs || [];
-  const ayahsEn = transl?.ayahs || [];
 
-  // Returns the word list for an ayah from the quran.com word-by-word data.
-  // Only skips Bismillah words if the quran.com data actually includes them
-  // (detected by checking whether the first word contains بِسْمِ).
-  function getWordList(ayah) {
-    const words = wordMap[ayah.numberInSurah];
-    if (!words) return null;
-    if (surahNum !== 1 && surahNum !== 9 && ayah.numberInSurah === 1) {
-      if (words[0]?.text?.includes("بِسْمِ")) return words.slice(4);
-    }
-    return words;
+  function getTranslation(ayahNum) {
+    return translations?.[`${surahNum}:${ayahNum}`]?.t ?? "";
   }
 
   function getAyahText(ayah) {
@@ -153,6 +154,7 @@ export default function QuranPage() {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&display=swap');
         @keyframes shimmer {
           0%   { opacity: 1; }
           50%  { opacity: 0.45; }
@@ -162,29 +164,6 @@ export default function QuranPage() {
         .sb-btn:hover { background: #f0faf4 !important; }
         .mode-btn:hover { opacity: 0.85; }
         .surah-link { text-decoration: none; }
-        .word-wrap { position: relative; display: inline-block; cursor: default; }
-        .word-wrap .tooltip {
-          position: absolute;
-          bottom: calc(100% + 6px);
-          left: 50%;
-          transform: translateX(-50%);
-          background: #1a1a1a;
-          color: #fff;
-          font-size: 12px;
-          font-family: system-ui, sans-serif;
-          font-weight: 400;
-          padding: 4px 10px;
-          border-radius: 6px;
-          white-space: nowrap;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.15s ease;
-          z-index: 100;
-          direction: ltr;
-          text-align: center;
-        }
-        .word-wrap:hover { background: #f0faf4; border-radius: 3px; }
-        .word-wrap:hover .tooltip { opacity: 1; }
       `}</style>
 
       <div style={{ display: "flex", minHeight: "100vh", background: "#fff", color: "#111" }}>
@@ -418,78 +397,14 @@ export default function QuranPage() {
               </div>
             )}
 
-            {/* ── Arabic (mushaf) mode — paginated ── */}
+            {/* ── Arabic (mushaf) mode — authentic SVG pages ── */}
             {!loadingContent && mode === "arabic" && (() => {
-              // Group ayahsAr by mushaf page number (each ayah carries a .page field)
-              const pages = [];
-              for (const ayah of ayahsAr) {
-                const last = pages[pages.length - 1];
-                if (last && last.num === ayah.page) {
-                  last.ayahs.push(ayah);
-                } else {
-                  pages.push({ num: ayah.page, ayahs: [ayah] });
-                }
-              }
+              // Collect unique page numbers for this surah (each ayah carries a .page field)
+              const pageNums = [...new Set(ayahsAr.map(a => a.page))];
               return (
-                <div>
-                  {pages.map(({ num, ayahs: pAyahs }, pi) => (
-                    <div key={num}>
-                      <div
-                        style={{
-                          background: "#fff",
-                          border: "1px solid #e8e8e8",
-                          borderRadius: 6,
-                          padding: "48px 36px 36px",
-                          boxShadow: "0 1px 10px rgba(0,0,0,0.05)",
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "Amiri, serif",
-                            fontWeight: 400,
-                            fontSize: 26,
-                            lineHeight: 2.8,
-                            direction: "rtl",
-                            textAlign: "center",
-                            color: "#111",
-                            margin: 0,
-                          }}
-                        >
-                          {pAyahs.map((ayah) => {
-                            const wl = getWordList(ayah);
-                            return (
-                              <span key={ayah.number}>
-                                {wl
-                                  ? wl.map((w, wi) => (
-                                      <span key={wi}>
-                                        <WordSpan word={w.text} tooltip={w.translation} />{" "}
-                                      </span>
-                                    ))
-                                  : getAyahText(ayah)}{" "}
-                                <AyahEndMarker n={ayah.numberInSurah} />
-                                {" "}
-                              </span>
-                            );
-                          })}
-                        </p>
-                        <div
-                          style={{
-                            textAlign: "center",
-                            marginTop: 28,
-                            paddingTop: 16,
-                            borderTop: "1px solid #f0f0f0",
-                            color: "#bbb",
-                            fontSize: 12,
-                            letterSpacing: "0.08em",
-                          }}
-                        >
-                          {num}
-                        </div>
-                      </div>
-                      {pi < pages.length - 1 && (
-                        <div style={{ height: 1, background: "#f0f0f0", margin: "28px 0" }} />
-                      )}
-                    </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                  {pageNums.map(num => (
+                    <SvgPage key={num} pageNum={num} />
                   ))}
                 </div>
               );
@@ -498,59 +413,40 @@ export default function QuranPage() {
             {/* ── Verse by verse mode ── */}
             {!loadingContent && mode === "verse" && (
               <div>
-                {ayahsAr.map((ayah, i) => (
-                  <div
-                    key={ayah.number}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "64px 1fr",
-                      gap: "0 20px",
-                      padding: "32px 0",
-                      borderBottom: "1px solid #f3f4f6",
-                    }}
-                  >
-                    {/* Reference */}
-                    <div style={{ paddingTop: 8, display: "flex", justifyContent: "center" }}>
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          border: `1.5px solid ${G}`,
-                          color: G,
-                          fontSize: 9,
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          letterSpacing: "-0.3px",
-                        }}
-                      >
+                {ayahsAr.map((ayah) => (
+                  <div key={ayah.number} style={{ padding: "28px 0", borderBottom: "1px solid #f3f4f6" }}>
+                    {/* Arabic text — Mushaf style */}
+                    <p style={{
+                      fontFamily: "'Amiri Quran', 'Amiri', serif",
+                      fontWeight: 400,
+                      fontSize: 30,
+                      lineHeight: 2.4,
+                      direction: "rtl",
+                      textAlign: "justify",
+                      color: "#1a1a1a",
+                      margin: "0 0 16px",
+                    }}>
+                      {getAyahText(ayah)}
+                      {" "}
+                      <span style={{
+                        fontFamily: "'Amiri Quran', 'Amiri', serif",
+                        color: G,
+                        fontSize: "0.78em",
+                        verticalAlign: "middle",
+                      }}>
+                        ﴿{toArabicIndic(ayah.numberInSurah)}﴾
+                      </span>
+                    </p>
+                    {/* Translation */}
+                    <p style={{
+                      fontSize: 15, lineHeight: 1.8, color: "#4b5563",
+                      margin: 0, borderLeft: `3px solid ${G}`, paddingLeft: 14,
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: G, marginRight: 6 }}>
                         {surahNum}:{ayah.numberInSurah}
                       </span>
-                    </div>
-
-                    {/* Arabic + translation */}
-                    <div>
-                      <p
-                        style={{
-                          fontFamily: "Amiri, serif",
-                          fontWeight: 400,
-                          fontSize: 28,
-                          lineHeight: 2.5,
-                          direction: "rtl",
-                          textAlign: "right",
-                          color: "#111",
-                          margin: "0 0 18px",
-                        }}
-                      >
-                        {getAyahText(ayah)}
-                      </p>
-                      <p style={{ fontSize: 15, lineHeight: 1.78, color: "#4b5563", margin: 0 }}>
-                        {ayahsEn[i]?.text}
-                      </p>
-                    </div>
+                      {getTranslation(ayah.numberInSurah)}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -559,30 +455,21 @@ export default function QuranPage() {
             {/* ── Translation only mode ── */}
             {!loadingContent && mode === "translation" && (
               <div>
-                {ayahsEn.map((ayah) => (
-                  <div
-                    key={ayah.number}
-                    style={{
-                      display: "flex",
-                      gap: 20,
-                      padding: "24px 0",
-                      borderBottom: "1px solid #f3f4f6",
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        minWidth: 30, height: 30, borderRadius: "50%",
-                        border: `1.5px solid ${G}`, color: G,
-                        fontSize: 11, fontWeight: 700,
-                        flexShrink: 0, marginTop: 3,
-                      }}
-                    >
+                {ayahsAr.map((ayah) => (
+                  <div key={ayah.number} style={{
+                    display: "flex", gap: 20, padding: "24px 0",
+                    borderBottom: "1px solid #f3f4f6", alignItems: "flex-start",
+                  }}>
+                    <span style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      minWidth: 30, height: 30, borderRadius: "50%",
+                      border: `1.5px solid ${G}`, color: G,
+                      fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 3,
+                    }}>
                       {ayah.numberInSurah}
                     </span>
                     <p style={{ fontSize: 16, lineHeight: 1.82, color: "#374151", margin: 0 }}>
-                      {ayah.text}
+                      {getTranslation(ayah.numberInSurah)}
                     </p>
                   </div>
                 ))}

@@ -12,7 +12,6 @@ import RecitationModal from "../components/recitation/RecitationModal";
 import { STATUS, TOTAL_AYAHS, SURAHS, loadProgress, saveProgress, loadAllStats } from "../../lib/storage";
 import { getSurah } from "../../lib/quran";
 import { recordRecitationResult } from "../../lib/hifzAnalytics";
-import ReviewCard from "../components/hifz/ReviewCard";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -43,7 +42,8 @@ export default function HifzPage() {
   const [stats,         setStats]         = useState({ memorized: 0, inProgress: 0 });
   const [mounted,       setMounted]       = useState(false);
   const [ayahTexts,     setAyahTexts]     = useState(null);
-  const [reciteAyah,    setReciteAyah]    = useState(null);
+  const [reciteAyah,       setReciteAyah]       = useState(null);
+  const [autoStartRecite,  setAutoStartRecite]  = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -59,6 +59,7 @@ export default function HifzPage() {
 
   function openRecitation(idx, text) {
     if (!text) return;
+    setAutoStartRecite(false);
     setReciteAyah({
       text,
       surahName:   selectedSurah.name,
@@ -67,17 +68,27 @@ export default function HifzPage() {
     });
   }
 
-  function openRecitationFromReview(surahN, ayahN) {
-    getSurah(surahN).then(texts => {
-      if (!texts?.[ayahN - 1]) return;
-      const surahData = SURAHS.find(s => s.n === surahN);
+  function handleNextAyah() {
+    if (!reciteAyah) return;
+    const { surahNumber, ayahNumber } = reciteAyah;
+    const surahInfo = SURAHS.find(s => s.n === surahNumber);
+    if (!surahInfo || ayahNumber >= surahInfo.a) return;
+    const nextN = ayahNumber + 1;
+    const openNext = (texts) => {
+      if (!texts?.[nextN - 1]) return;
+      setAutoStartRecite(true);
       setReciteAyah({
-        text:        texts[ayahN - 1],
-        surahName:   surahData?.name ?? `Surah ${surahN}`,
-        surahNumber: surahN,
-        ayahNumber:  ayahN,
+        text:        texts[nextN - 1],
+        surahName:   surahInfo.name,
+        surahNumber,
+        ayahNumber:  nextN,
       });
-    });
+    };
+    if (selectedSurah?.n === surahNumber && ayahTexts) {
+      openNext(ayahTexts);
+    } else {
+      getSurah(surahNumber).then(openNext);
+    }
   }
 
   function handleRecitationResult({ surah: surahN, ayah: ayahN, score, passed }) {
@@ -151,8 +162,35 @@ export default function HifzPage() {
 
         <div style={{ maxWidth: 680, margin: "0 auto", paddingBottom: 60 }}>
           <HifzStatsCard mounted={mounted} stats={stats} totalPct={totalPct} />
+
+          {/* Continuous Recitation shortcut */}
+          <div style={{ margin: "12px 16px 0" }}>
+            <Link href="/recitation/continuous" style={{ textDecoration: "none" }}>
+              <div style={{
+                background: `linear-gradient(135deg,#157a3c,${G},${G2})`,
+                borderRadius: 16, padding: "16px 20px",
+                display: "flex", alignItems: "center", gap: 14,
+                boxShadow: "0 4px 16px rgba(26,138,74,0.28)",
+                cursor: "pointer",
+              }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%",
+                  background: "rgba(255,255,255,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 22, flexShrink: 0,
+                }}>🎙️</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>Continuous Recitation</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.72)", marginTop: 2 }}>
+                    Recite multiple ayahs in one session
+                  </div>
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 18 }}>›</div>
+              </div>
+            </Link>
+          </div>
+
           <StatusLegend />
-          <ReviewCard mounted={mounted} onReciteAyah={openRecitationFromReview} />
           <SurahSelector selectedSurah={selectedSurah} onSelect={selectSurah} mounted={mounted} />
 
           {selectedSurah && (
@@ -193,12 +231,19 @@ export default function HifzPage() {
       </div>
       {reciteAyah && (
         <RecitationModal
+          key={`${reciteAyah.surahNumber}-${reciteAyah.ayahNumber}`}
           ayah={reciteAyah.text}
           surahName={reciteAyah.surahName}
           surahNumber={reciteAyah.surahNumber}
           ayahNumber={reciteAyah.ayahNumber}
           onResult={handleRecitationResult}
           onClose={() => setReciteAyah(null)}
+          onNextAyah={handleNextAyah}
+          hasNextAyah={(() => {
+            const info = SURAHS.find(s => s.n === reciteAyah.surahNumber);
+            return !!info && reciteAyah.ayahNumber < info.a;
+          })()}
+          autoStart={autoStartRecite}
         />
       )}
       <BottomNav />

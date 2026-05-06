@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
 
@@ -46,29 +46,103 @@ const COLLECTIONS = [
   },
 ];
 
-function normalizeHadithPayload(payload) {
-  const raw = payload?.data ?? payload ?? {};
-  const text =
-    raw.hadith_english ||
-    raw.hadithEnglish ||
-    raw.text ||
-    raw.hadith ||
-    "No hadith text available.";
-  const source = raw.refno || raw.reference || raw.book || "Reference unavailable";
-  const collection =
-    raw.bookName || raw.collection || raw.book || "Sahih Bukhari";
+function GradeBadge({ grade }) {
+  if (!grade) return null;
+  const color = grade.toLowerCase().includes("sahih") ? GREEN : "#b45309";
+  return (
+    <span
+      style={{
+        background: grade.toLowerCase().includes("sahih") ? "#ecfdf3" : "#fef3c7",
+        color,
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "3px 8px",
+        borderRadius: 999,
+        border: `1px solid ${color}33`,
+      }}
+    >
+      {grade}
+    </span>
+  );
+}
 
-  return { text, source, collection };
+function HadithCard({ item, showArabic = true }) {
+  return (
+    <article
+      style={{
+        background: "#fff",
+        border: "1px solid #e5e7eb",
+        borderLeft: `3px solid ${GREEN}`,
+        borderRadius: 10,
+        padding: "12px 14px",
+      }}
+    >
+      {item.arabicText ? (
+        <p
+          style={{
+            margin: "0 0 10px",
+            fontSize: 18,
+            fontFamily: "Amiri, serif",
+            lineHeight: 1.9,
+            color: "#1f2937",
+            direction: "rtl",
+            textAlign: "right",
+          }}
+        >
+          {item.arabicText}
+        </p>
+      ) : null}
+
+      {item.narrator ? (
+        <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600, color: "#4b5563", fontStyle: "italic" }}>
+          {item.narrator}
+        </p>
+      ) : null}
+
+      <p style={{ margin: "0 0 10px", fontSize: 15, lineHeight: 1.75, color: "#374151" }}>
+        {item.englishText || "No hadith text available."}
+      </p>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+        <GradeBadge grade={item.grade} />
+        {item.chapter ? (
+          <span style={{ fontSize: 12, color: "#6b7280" }}>{item.chapter}</span>
+        ) : null}
+        {item.hadithNumber ? (
+          <span
+            style={{
+              marginLeft: "auto",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#9ca3af",
+            }}
+          >
+            #{item.hadithNumber}
+          </span>
+        ) : null}
+      </div>
+    </article>
+  );
 }
 
 export default function HadithPage() {
-  const [hadith, setHadith] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeCollection, setActiveCollection] = useState(null);
+  const [hadith,            setHadith]            = useState(null);
+  const [loading,           setLoading]           = useState(true);
+  const [error,             setError]             = useState("");
+  const [activeCollection,  setActiveCollection]  = useState(null);
   const [collectionHadiths, setCollectionHadiths] = useState([]);
   const [collectionLoading, setCollectionLoading] = useState(false);
-  const [collectionError, setCollectionError] = useState("");
+  const [collectionError,   setCollectionError]   = useState("");
+  const [searchQuery,       setSearchQuery]       = useState("");
+  const [searchResults,     setSearchResults]     = useState(null); // null = not searched yet
+  const [searchLoading,     setSearchLoading]     = useState(false);
+  const [searchError,       setSearchError]       = useState("");
+  const [numQuery,          setNumQuery]          = useState("");
+  const [numBook,           setNumBook]           = useState("");
+  const [numResults,        setNumResults]        = useState(null);
+  const [numLoading,        setNumLoading]        = useState(false);
+  const [numError,          setNumError]          = useState("");
+  const debounceRef = useRef(null);
 
   const fetchRandomHadith = useCallback(async () => {
     try {
@@ -76,8 +150,8 @@ export default function HadithPage() {
       setError("");
       const response = await fetch("/api/hadith", { cache: "no-store" });
       const data = await response.json();
-      if (!response.ok) throw new Error("Failed to fetch hadith.");
-      setHadith(normalizeHadithPayload(data));
+      if (!response.ok || !data.success) throw new Error(data.error || "Failed to fetch hadith.");
+      setHadith(data.hadith);
     } catch (err) {
       setError(err.message || "Could not load hadith right now.");
     } finally {
@@ -93,22 +167,68 @@ export default function HadithPage() {
     try {
       setCollectionLoading(true);
       setCollectionError("");
-      if (!append) {
-        setActiveCollection(slug);
-      }
+      if (!append) setActiveCollection(slug);
 
-      const response = await fetch(`/api/hadith/${slug}?count=10`, { cache: "no-store" });
+      const page = append ? Math.ceil(collectionHadiths.length / 10) + 1 : 1;
+      const response = await fetch(`/api/hadith/${slug}?count=10&page=${page}`, { cache: "no-store" });
       const data = await response.json();
-      if (!response.ok) throw new Error("Failed to fetch collection hadiths.");
+      if (!response.ok || !data.success) throw new Error(data.error || "Failed to fetch collection hadiths.");
 
-      const normalized = (data.data || []).map((item) => normalizeHadithPayload(item));
-      setCollectionHadiths((prev) => (append ? [...prev, ...normalized] : normalized));
+      setCollectionHadiths(prev => append ? [...prev, ...data.hadiths] : data.hadiths);
     } catch (err) {
       setCollectionError(err.message || "Could not load hadith collection.");
     } finally {
       setCollectionLoading(false);
     }
-  }, []);
+  }, [collectionHadiths.length]);
+
+  function handleSearchChange(e) {
+    const q = e.target.value;
+    setSearchQuery(q);
+    clearTimeout(debounceRef.current);
+
+    if (!q.trim()) {
+      setSearchResults(null);
+      setSearchError("");
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        setSearchError("");
+        const res  = await fetch(`/api/hadith/search?q=${encodeURIComponent(q.trim())}&count=10`);
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || "Search failed.");
+        setSearchResults(data.hadiths);
+      } catch (err) {
+        setSearchError(err.message || "Search failed.");
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 500);
+  }
+
+  async function searchByNumber() {
+    const n = numQuery.trim();
+    if (!n || isNaN(Number(n)) || Number(n) <= 0) return;
+    setNumLoading(true);
+    setNumError("");
+    setNumResults(null);
+    try {
+      const qs = new URLSearchParams({ n });
+      if (numBook) qs.set("book", numBook);
+      const res  = await fetch(`/api/hadith/number?${qs}`);
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Not found.");
+      setNumResults(data.hadiths);
+    } catch (err) {
+      setNumError(err.message || "Could not fetch hadith.");
+    } finally {
+      setNumLoading(false);
+    }
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
@@ -147,6 +267,135 @@ export default function HadithPage() {
       </nav>
 
       <main style={{ maxWidth: 980, margin: "0 auto", padding: "26px 20px 50px" }}>
+        {/* Search bar */}
+        <div style={{ marginBottom: 18 }}>
+          <input
+            type="search"
+            placeholder="Search hadiths in English…"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: "12px 16px",
+              fontSize: 15,
+              borderRadius: 12,
+              border: "1.5px solid #e5e7eb",
+              background: "#fff",
+              outline: "none",
+              boxShadow: CARD_SHADOW,
+            }}
+          />
+          {searchLoading && (
+            <p style={{ margin: "8px 0 0", fontSize: 13, color: "#9ca3af" }}>Searching…</p>
+          )}
+          {searchError && (
+            <p style={{ margin: "8px 0 0", fontSize: 13, color: "#b91c1c" }}>{searchError}</p>
+          )}
+        </div>
+
+        {/* Search results */}
+        {searchResults !== null && (
+          <section style={{ marginBottom: 24 }}>
+            <h3 style={{ margin: "0 0 12px", fontSize: 17, color: "#111827" }}>
+              {searchResults.length === 0
+                ? `No results for "${searchQuery}"`
+                : `Results for "${searchQuery}"`}
+            </h3>
+            {searchResults.length > 0 && (
+              <div style={{ display: "grid", gap: 10 }}>
+                {searchResults.map((item, i) => (
+                  <HadithCard key={`search-${item.id ?? i}`} item={item} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Number search */}
+        <section
+          style={{
+            background: "#fff",
+            borderRadius: 16,
+            boxShadow: CARD_SHADOW,
+            padding: 18,
+            marginBottom: 18,
+          }}
+        >
+          <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 800, color: GREEN,
+                      letterSpacing: "0.07em", textTransform: "uppercase" }}>
+            Search by Hadith Number
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <input
+              type="number"
+              min="1"
+              placeholder="e.g. 26"
+              value={numQuery}
+              onChange={e => setNumQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && searchByNumber()}
+              style={{
+                flex: "1 1 80px", minWidth: 80, maxWidth: 120,
+                padding: "10px 12px", fontSize: 15,
+                borderRadius: 10, border: "1.5px solid #e5e7eb",
+                outline: "none", boxSizing: "border-box",
+              }}
+            />
+            <select
+              value={numBook}
+              onChange={e => setNumBook(e.target.value)}
+              style={{
+                flex: "2 1 160px",
+                padding: "10px 12px", fontSize: 14,
+                borderRadius: 10, border: "1.5px solid #e5e7eb",
+                background: "#fff", outline: "none",
+                color: numBook ? "#111827" : "#9ca3af",
+              }}
+            >
+              <option value="">All collections</option>
+              {COLLECTIONS.map(c => (
+                <option key={c.slug} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={searchByNumber}
+              disabled={numLoading || !numQuery.trim()}
+              style={{
+                flex: "0 0 auto",
+                padding: "10px 20px", fontSize: 14, fontWeight: 700,
+                borderRadius: 10, border: "none",
+                background: numLoading || !numQuery.trim() ? "#e5e7eb" : GREEN,
+                color: numLoading || !numQuery.trim() ? "#9ca3af" : "#fff",
+                cursor: numLoading || !numQuery.trim() ? "default" : "pointer",
+              }}
+            >
+              {numLoading ? "Searching…" : "Search"}
+            </button>
+          </div>
+
+          {numError && (
+            <p style={{ margin: "10px 0 0", fontSize: 13, color: "#b91c1c" }}>{numError}</p>
+          )}
+
+          {numResults !== null && (
+            <div style={{ marginTop: 14 }}>
+              {numResults.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>
+                  No hadiths found for number {numQuery}.
+                </p>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {numResults.map((item, i) => (
+                    <HadithCard key={`num-${item.id ?? i}`} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* Hadith of the Day */}
         <section
           style={{
             background: "#fff",
@@ -195,30 +444,48 @@ export default function HadithPage() {
               <div style={{ height: 16, background: "#efefef", borderRadius: 6 }} />
               <div style={{ height: 16, width: "75%", background: "#efefef", borderRadius: 6 }} />
             </div>
-          ) : (
+          ) : hadith ? (
             <>
-              <p style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.9, color: "#374151" }}>
-                {hadith?.text}
-              </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-                <span
+              {hadith.arabicText ? (
+                <p
                   style={{
-                    background: "#ecfdf3",
-                    color: GREEN,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    padding: "5px 9px",
-                    borderRadius: 999,
+                    margin: "0 0 12px",
+                    fontSize: 20,
+                    fontFamily: "Amiri, serif",
+                    lineHeight: 1.9,
+                    color: "#1f2937",
+                    direction: "rtl",
+                    textAlign: "right",
                   }}
                 >
-                  {hadith?.collection || "Collection"}
-                </span>
-                <span style={{ fontSize: 13, color: "#6b7280" }}>{hadith?.source}</span>
+                  {hadith.arabicText}
+                </p>
+              ) : null}
+
+              {hadith.narrator ? (
+                <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 600, color: "#4b5563", fontStyle: "italic" }}>
+                  {hadith.narrator}
+                </p>
+              ) : null}
+
+              <p style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.9, color: "#374151" }}>
+                {hadith.englishText}
+              </p>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                <GradeBadge grade={hadith.grade} />
+                {hadith.chapter ? (
+                  <span style={{ fontSize: 12, color: "#6b7280" }}>{hadith.chapter}</span>
+                ) : null}
+                {hadith.source ? (
+                  <span style={{ fontSize: 13, color: "#6b7280" }}>{hadith.source}</span>
+                ) : null}
               </div>
             </>
-          )}
+          ) : null}
         </section>
 
+        {/* Collections grid */}
         <section>
           <h3 style={{ margin: "0 0 12px", fontSize: 18, color: "#111827" }}>
             Major Hadith Collections
@@ -234,10 +501,14 @@ export default function HadithPage() {
               <button
                 key={collection.slug}
                 type="button"
-                onClick={() => fetchCollectionHadiths(collection.slug)}
+                onClick={() => {
+                  setSearchQuery("");
+                  setSearchResults(null);
+                  fetchCollectionHadiths(collection.slug);
+                }}
                 style={{
                   textAlign: "left",
-                  border: "1px solid #e5e7eb",
+                  border: `1.5px solid ${activeCollection === collection.slug ? GREEN : "#e5e7eb"}`,
                   borderRadius: 14,
                   background: "#fff",
                   boxShadow: CARD_SHADOW,
@@ -304,37 +575,21 @@ export default function HadithPage() {
                 <p style={{ margin: 0, color: "#b91c1c", fontSize: 14 }}>{collectionError}</p>
               ) : null}
 
-              <div style={{ display: "grid", gap: 10 }}>
-                {collectionHadiths.map((item, index) => (
-                  <article
-                    key={`${item.source}-${index}`}
-                    style={{
-                      background: "#fff",
-                      border: "1px solid #e5e7eb",
-                      borderLeft: `3px solid ${GREEN}`,
-                      borderRadius: 10,
-                      padding: "12px 14px",
-                    }}
-                  >
-                    <p style={{ margin: "0 0 8px", fontSize: 15, lineHeight: 1.75, color: "#374151" }}>
-                      {item.text}
-                    </p>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        background: "#ecfdf3",
-                        color: GREEN,
-                        borderRadius: 999,
-                        padding: "4px 8px",
-                        fontSize: 11,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {item.collection} • {item.source}
-                    </span>
-                  </article>
-                ))}
-              </div>
+              {collectionLoading && collectionHadiths.length === 0 ? (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {[1, 2, 3].map(n => (
+                    <div key={n} style={{ height: 80, background: "#efefef", borderRadius: 10 }} />
+                  ))}
+                </div>
+              ) : collectionHadiths.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: "#9ca3af" }}>No hadiths found.</p>
+              ) : (
+                <div style={{ display: "grid", gap: 10 }}>
+                  {collectionHadiths.map((item, index) => (
+                    <HadithCard key={`${activeCollection}-${item.id ?? index}`} item={item} />
+                  ))}
+                </div>
+              )}
             </div>
           ) : null}
         </section>

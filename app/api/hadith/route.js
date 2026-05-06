@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
+import { getRandomHadith } from "../../../lib/hadith";
 
 export async function GET() {
   try {
-    const response = await fetch("https://random-hadith-generator.vercel.app/bukhari/", {
-      cache: "no-store",
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json({ error: "Failed to fetch hadith." }, { status: 502 });
-    }
-
-    return NextResponse.json(data, { status: 200 });
-  } catch {
-    return NextResponse.json({ error: "Hadith service unavailable." }, { status: 500 });
+    const hadith = await getRandomHadith();
+    return NextResponse.json({ success: true, hadith }, { status: 200 });
+  } catch (err) {
+    console.error("[api/hadith] random hadith error:", err.message);
+    return NextResponse.json({ success: false, error: "Hadith service unavailable." }, { status: 500 });
   }
 }

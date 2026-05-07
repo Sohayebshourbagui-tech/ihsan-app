@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "./components/BottomNav";
+import { getReviewStats } from "../lib/hifzAnalytics";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -105,6 +106,14 @@ function GeoPattern({ id, opacity = 0.12 }) {
   );
 }
 
+function formatCountdown(ms) {
+  if (!ms || ms <= 0) return null;
+  const h = Math.floor(ms / (60 * 60 * 1000));
+  const m = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
 function getLastMemorizingSurah() {
   if (typeof window === "undefined") return null;
   let best = null, bestCount = 0;
@@ -127,16 +136,18 @@ function getLastMemorizingSurah() {
 
 export default function Home() {
   const router = useRouter();
-  const [query, setQuery]       = useState("");
-  const [prayerData, setPrayerData] = useState(null);
-  const [prayerErr, setPrayerErr]   = useState("");
-  const [lastSurah, setLastSurah]   = useState(null);
-  const [mounted, setMounted]       = useState(false);
+  const [query, setQuery]             = useState("");
+  const [prayerData, setPrayerData]   = useState(null);
+  const [prayerErr, setPrayerErr]     = useState("");
+  const [lastSurah, setLastSurah]     = useState(null);
+  const [reviewStats, setReviewStats] = useState({ due: 0, weak: 0, nextReviewMs: null });
+  const [mounted, setMounted]         = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
     setLastSurah(getLastMemorizingSurah());
+    setReviewStats(getReviewStats());
   }, []);
 
   useEffect(() => {
@@ -344,6 +355,61 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* ── Today's Review ── */}
+          {mounted && (
+            <div style={{ padding: "16px 20px 0" }}>
+              <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
+                Today's Review
+              </p>
+              <a href="/hifz/review" style={{ textDecoration: "none", display: "block" }}>
+                <div style={{
+                  background: "#fff",
+                  borderRadius: 16,
+                  padding: "16px 18px",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                  border: `1px solid ${G}18`,
+                  display: "flex", alignItems: "center", gap: 14,
+                }}>
+                  <div style={{
+                    flexShrink: 0, width: 50, height: 50, borderRadius: 12,
+                    background: reviewStats.due > 0
+                      ? "linear-gradient(135deg, #dc2626, #ef4444)"
+                      : `linear-gradient(135deg, ${G}, ${G2})`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontSize: 22,
+                  }}>
+                    🔁
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", marginBottom: 2 }}>
+                      {reviewStats.due > 0
+                        ? `${reviewStats.due} ayah${reviewStats.due !== 1 ? "s" : ""} due for review`
+                        : "Review queue is clear ✓"}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#6b7280" }}>
+                      {reviewStats.due > 0 && reviewStats.weak > 0
+                        ? `${reviewStats.weak} weak ayah${reviewStats.weak !== 1 ? "s" : ""} to strengthen`
+                        : reviewStats.nextReviewMs
+                          ? `Next review in ${formatCountdown(reviewStats.nextReviewMs)}`
+                          : "Tap to review weak ayahs"}
+                    </div>
+                  </div>
+                  <div style={{
+                    flexShrink: 0,
+                    background: reviewStats.due > 0 ? "#fef2f2" : "#ecfdf3",
+                    color: reviewStats.due > 0 ? "#dc2626" : G,
+                    border: `1px solid ${reviewStats.due > 0 ? "#dc262630" : G + "30"}`,
+                    fontWeight: 700, fontSize: 12,
+                    padding: "9px 14px", borderRadius: 10,
+                    whiteSpace: "nowrap",
+                  }}>
+                    {reviewStats.due > 0 ? "Begin →" : "Browse"}
+                  </div>
+                </div>
+              </a>
+            </div>
+          )}
 
           <div style={{ height: 20 }} />
           <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />

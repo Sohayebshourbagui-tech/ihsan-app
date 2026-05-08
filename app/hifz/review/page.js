@@ -24,10 +24,11 @@ const URGENCY_STYLE = {
 };
 
 function scoreFeedback(score) {
-  if (score >= 90) return { text: "Excellent! 🌟",     color: "#16a34a" };
-  if (score >= 70) return { text: "Good work 👍",       color: G };
-  if (score >= 50) return { text: "Keep practicing",    color: "#d97706" };
-  return              { text: "Needs more work",        color: "#dc2626" };
+  if (score >= 93) return { text: "Excellent recitation.",         color: "#15803d" };
+  if (score >= 80) return { text: "Very good — nearly there.",     color: G        };
+  if (score >= 65) return { text: "Good effort. One more time.",   color: G        };
+  if (score >= 50) return { text: "Keep practicing this ayah.",    color: "#d97706" };
+  return              { text: "Focus and try again.",              color: "#dc2626" };
 }
 
 function formatCountdown(ms) {
@@ -87,6 +88,7 @@ export default function ReviewPage() {
   const [completedToday, setCompletedToday] = useState(0);
   const [lastFeedback,   setLastFeedback]   = useState(null);
   const [mounted,        setMounted]        = useState(false);
+  const [sessionDone,    setSessionDone]    = useState(false);
 
   const refreshData = useCallback(() => {
     setQueue(getReviewQueue(50));
@@ -115,7 +117,8 @@ export default function ReviewPage() {
 
   function handleResult({ surah, ayah, score, passed }) {
     recordRecitationResult({ surah, ayah, score, passed });
-    setCompletedToday(c => c + 1);
+    const next = completedToday + 1;
+    setCompletedToday(next);
     setLastFeedback(scoreFeedback(score));
     refreshData();
   }
@@ -128,6 +131,7 @@ export default function ReviewPage() {
       startReviewItem(next);
     } else {
       setActiveItem(null);
+      if (completedToday > 0) setSessionDone(true);
     }
   }
 
@@ -227,6 +231,40 @@ export default function ReviewPage() {
               animation: "fadeInUp 0.25s ease",
             }}>
               {lastFeedback.text}
+            </div>
+          )}
+
+          {/* ── Session completion ── */}
+          {sessionDone && queue.length === 0 && (
+            <div style={{
+              margin: "16px 16px 0",
+              background: `linear-gradient(135deg, #14532d 0%, ${G} 60%, ${G2} 100%)`,
+              borderRadius: 20,
+              padding: "32px 24px",
+              textAlign: "center",
+              position: "relative", overflow: "hidden",
+              animation: "fadeInUp 0.4s ease",
+            }}>
+              <GeoPattern id="sessionDone" opacity={0.1} />
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <div style={{ fontSize: 44, marginBottom: 12 }}>✓</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginBottom: 8 }}>
+                  Session complete
+                </div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", marginBottom: 4 }}>
+                  {completedToday} ayah{completedToday !== 1 ? "s" : ""} reviewed today
+                </div>
+                <div style={{
+                  fontSize: 13, fontFamily: "Amiri, serif",
+                  color: "rgba(255,255,255,0.65)", marginTop: 16, lineHeight: 1.8,
+                  direction: "rtl",
+                }}>
+                  إِنَّ مَعَ الْعُسْرِ يُسْرًا
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, fontStyle: "italic" }}>
+                  Indeed, with hardship comes ease. — 94:6
+                </div>
+              </div>
             </div>
           )}
 

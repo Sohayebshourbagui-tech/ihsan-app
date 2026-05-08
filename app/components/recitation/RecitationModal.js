@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import MicButton      from "./MicButton";
 import TranscriptView from "./TranscriptView";
-import { compareAyah }               from "../../../lib/arabic";
-import { withBismillah }             from "../../../lib/quran";
+import { compareAyah, compareRecitation } from "../../../lib/arabic";
+import { withBismillah }                  from "../../../lib/quran";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -28,6 +28,15 @@ export default function RecitationModal({
   const transcriptRef  = useRef("");
   const closingRef     = useRef(false);
   const comparedRef    = useRef(false);
+
+  // Live per-word feedback while the user is speaking
+  const liveWords = useMemo(() => {
+    if (!listening || !transcript.trim()) return null;
+    const expWords = expectedText.split(/\s+/).filter(Boolean);
+    const recWords = transcript.split(/\s+/).filter(Boolean);
+    if (recWords.length === 0) return null;
+    return compareRecitation(expWords, recWords, { isLive: true, threshold: 0.5 });
+  }, [listening, transcript, expectedText]);
 
   function runComparison() {
     if (closingRef.current || !transcriptRef.current || comparedRef.current) return;
@@ -155,6 +164,7 @@ export default function RecitationModal({
             transcript={transcript}
             listening={listening}
             comparison={comparison}
+            liveWords={liveWords}
           />
 
           {error && (

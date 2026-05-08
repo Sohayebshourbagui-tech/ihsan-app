@@ -3,11 +3,21 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "./components/BottomNav";
-import { getReviewStats } from "../lib/hifzAnalytics";
+import { getReviewStats, getStreak } from "../lib/hifzAnalytics";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
 const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
+const DAILY_VERSES = [
+  { ar: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",                        en: "Indeed, with hardship comes ease.",          ref: "94:6"  },
+  { ar: "فَاذْكُرُونِي أَذْكُرْكُمْ",                          en: "Remember Me, and I will remember you.",      ref: "2:152" },
+  { ar: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا",     en: "Whoever fears Allah, He will find a way out.", ref: "65:2"  },
+  { ar: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",                    en: "Indeed, Allah is with the patient.",          ref: "2:153" },
+  { ar: "وَقُل رَّبِّ زِدْنِي عِلْمًا",                        en: "And say: My Lord, increase me in knowledge.", ref: "20:114"},
+  { ar: "وَذَكِّرْ فَإِنَّ الذِّكْرَى تَنفَعُ الْمُؤْمِنِينَ", en: "Remind, for reminders benefit the believers.", ref: "51:55" },
+  { ar: "وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",            en: "Seek help through patience and prayer.",      ref: "2:45"  },
+];
 
 const SURAHS = [
   { n:1,  name:"Al-Fatihah"    }, { n:2,  name:"Al-Baqarah"   },
@@ -141,13 +151,17 @@ export default function Home() {
   const [prayerErr, setPrayerErr]     = useState("");
   const [lastSurah, setLastSurah]     = useState(null);
   const [reviewStats, setReviewStats] = useState({ due: 0, weak: 0, nextReviewMs: null });
+  const [streak, setStreak]           = useState(0);
   const [mounted, setMounted]         = useState(false);
   const inputRef = useRef(null);
+
+  const dailyVerse = DAILY_VERSES[new Date().getDate() % DAILY_VERSES.length];
 
   useEffect(() => {
     setMounted(true);
     setLastSurah(getLastMemorizingSurah());
     setReviewStats(getReviewStats());
+    setStreak(getStreak());
   }, []);
 
   useEffect(() => {
@@ -201,7 +215,7 @@ export default function Home() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             position: "relative", zIndex: 1,
           }}>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>
                 Ihsan <span style={{ fontFamily: "Amiri, serif", fontWeight: 400 }}>إحسان</span>
               </div>
@@ -211,7 +225,17 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 24 }}>☽</span>
+            {mounted && streak > 0 && (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 5,
+                background: "rgba(255,255,255,0.18)",
+                borderRadius: 20, padding: "5px 12px",
+              }}>
+                <span style={{ fontSize: 14 }}>🔥</span>
+                <span style={{ color: "#fff", fontSize: 13, fontWeight: 800 }}>{streak}</span>
+              </div>
+            )}
+            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 22 }}>☽</span>
           </div>
         </nav>
 
@@ -363,53 +387,98 @@ export default function Home() {
                 Today's Review
               </p>
               <a href="/hifz/review" style={{ textDecoration: "none", display: "block" }}>
-                <div style={{
-                  background: "#fff",
-                  borderRadius: 16,
-                  padding: "16px 18px",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-                  border: `1px solid ${G}18`,
-                  display: "flex", alignItems: "center", gap: 14,
-                }}>
+                {reviewStats.due > 0 ? (
+                  /* ── Due: full gradient hero card ── */
                   <div style={{
-                    flexShrink: 0, width: 50, height: 50, borderRadius: 12,
-                    background: reviewStats.due > 0
-                      ? "linear-gradient(135deg, #dc2626, #ef4444)"
-                      : `linear-gradient(135deg, ${G}, ${G2})`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#fff", fontSize: 22,
+                    background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
+                    borderRadius: 18,
+                    padding: "20px 20px 18px",
+                    boxShadow: "0 6px 24px rgba(26,138,74,0.3)",
+                    position: "relative", overflow: "hidden",
                   }}>
-                    🔁
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", marginBottom: 2 }}>
-                      {reviewStats.due > 0
-                        ? `${reviewStats.due} ayah${reviewStats.due !== 1 ? "s" : ""} due for review`
-                        : "Review queue is clear ✓"}
+                    <GeoPattern id="reviewHero" opacity={0.1} />
+                    <div style={{ position: "relative", zIndex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.5px" }}>
+                            {reviewStats.due}
+                          </div>
+                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>
+                            ayah{reviewStats.due !== 1 ? "s" : ""} due for review
+                          </div>
+                        </div>
+                        <div style={{
+                          background: "rgba(255,255,255,0.2)",
+                          borderRadius: 12, padding: "10px 18px",
+                          color: "#fff", fontSize: 14, fontWeight: 800,
+                        }}>
+                          Begin →
+                        </div>
+                      </div>
+                      {reviewStats.weak > 0 && (
+                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                          {reviewStats.weak} weak ayah{reviewStats.weak !== 1 ? "s" : ""} to strengthen
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: 12, color: "#6b7280" }}>
-                      {reviewStats.due > 0 && reviewStats.weak > 0
-                        ? `${reviewStats.weak} weak ayah${reviewStats.weak !== 1 ? "s" : ""} to strengthen`
-                        : reviewStats.nextReviewMs
+                  </div>
+                ) : (
+                  /* ── Clear: minimal white card ── */
+                  <div style={{
+                    background: "#fff",
+                    borderRadius: 16,
+                    padding: "16px 18px",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+                    border: `1px solid ${G}18`,
+                    display: "flex", alignItems: "center", gap: 14,
+                  }}>
+                    <div style={{
+                      flexShrink: 0, width: 44, height: 44, borderRadius: 11,
+                      background: `linear-gradient(135deg, ${G}, ${G2})`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: 20,
+                    }}>
+                      ✓
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Review queue is clear</div>
+                      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
+                        {reviewStats.nextReviewMs
                           ? `Next review in ${formatCountdown(reviewStats.nextReviewMs)}`
-                          : "Tap to review weak ayahs"}
+                          : "Review weak ayahs to keep improving"}
+                      </div>
                     </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: G }}>Browse</div>
                   </div>
-                  <div style={{
-                    flexShrink: 0,
-                    background: reviewStats.due > 0 ? "#fef2f2" : "#ecfdf3",
-                    color: reviewStats.due > 0 ? "#dc2626" : G,
-                    border: `1px solid ${reviewStats.due > 0 ? "#dc262630" : G + "30"}`,
-                    fontWeight: 700, fontSize: 12,
-                    padding: "9px 14px", borderRadius: 10,
-                    whiteSpace: "nowrap",
-                  }}>
-                    {reviewStats.due > 0 ? "Begin →" : "Browse"}
-                  </div>
-                </div>
+                )}
               </a>
             </div>
           )}
+
+          {/* ── Daily Verse ── */}
+          <div style={{ padding: "16px 20px 0" }}>
+            <div style={{
+              background: "#fff",
+              borderRadius: 14,
+              padding: "16px 18px",
+              boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
+              border: `1px solid ${G}12`,
+            }}>
+              <p style={{ margin: "0 0 10px", fontSize: 9, fontWeight: 800, color: G, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                Verse of the Day · {dailyVerse.ref}
+              </p>
+              <p style={{
+                margin: "0 0 8px", fontFamily: "Amiri, serif", fontSize: 20,
+                direction: "rtl", textAlign: "right", lineHeight: 1.9,
+                color: "#111827",
+              }}>
+                {dailyVerse.ar}
+              </p>
+              <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5, fontStyle: "italic" }}>
+                {dailyVerse.en}
+              </p>
+            </div>
+          </div>
 
           <div style={{ height: 20 }} />
           <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />

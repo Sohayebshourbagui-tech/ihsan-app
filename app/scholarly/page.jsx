@@ -96,10 +96,11 @@ function CitationCard({ citation }) {
 
 // ─── Message Bubble ────────────────────────────────────────────────────────
 function MessageBubble({ message, isStreaming }) {
-  const isUser = message.role === "user";
+  const isUser   = message.role === "user";
+  const [expanded, setExpanded] = useState(false);
 
   const formatText = (text) =>
-    text.split(/\n\n+/).map((para, i) => {
+    (text || "").split(/\n\n+/).map((para, i) => {
       const withSup = para.replace(
         /\[(\d+)\]/g,
         `<sup style="font-size:11px;color:${G};background:#d1fae5;padding:0 3px;border-radius:3px;font-weight:700">[$1]</sup>`
@@ -120,6 +121,16 @@ function MessageBubble({ message, isStreaming }) {
         />
       );
     });
+
+  // What text to display: during streaming show accumulating summary;
+  // after streaming show summary (collapsed) or detail (expanded).
+  const displayText = isStreaming
+    ? message.content
+    : expanded
+      ? (message.detail || message.summary || message.content)
+      : (message.summary || message.content);
+
+  const canExpand = !isUser && !isStreaming && message.detail && message.detail !== message.summary;
 
   return (
     <div style={{
@@ -150,7 +161,9 @@ function MessageBubble({ message, isStreaming }) {
         borderBottomRightRadius: isUser ? 4 : 16,
         borderBottomLeftRadius: isUser ? 16 : 4,
       }}>
-        {formatText(message.content)}
+        <div style={expanded ? { animation: "fadeIn 0.2s ease" } : {}}>
+          {formatText(displayText)}
+        </div>
 
         {isStreaming && (
           <span style={{
@@ -160,8 +173,22 @@ function MessageBubble({ message, isStreaming }) {
           }} />
         )}
 
-        {!isUser && message.citations?.length > 0 && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px dashed #bbf7d0` }}>
+        {canExpand && (
+          <button
+            onClick={() => setExpanded(e => !e)}
+            style={{
+              display: "block", marginTop: 10,
+              background: "none", border: "none", padding: 0,
+              fontSize: 13, fontWeight: 700, color: G,
+              cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            {expanded ? "Show less ↑" : "Read full answer →"}
+          </button>
+        )}
+
+        {!isUser && expanded && message.citations?.length > 0 && (
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px dashed #bbf7d0`, animation: "fadeIn 0.2s ease" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: G, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>
               📖 Sources & References
             </div>
@@ -274,7 +301,7 @@ export default function ScholarlyPage() {
     setMessages(updatedMsgs);
 
     const assistantIdx = updatedMsgs.length;
-    setMessages(prev => [...prev, { role: "assistant", content: "", citations: [] }]);
+    setMessages(prev => [...prev, { role: "assistant", content: "", summary: "", detail: "", citations: [] }]);
     setStreamingIdx(assistantIdx);
 
     try {
@@ -286,33 +313,38 @@ export default function ScholarlyPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
 
-      // Word-by-word animation
-      const words = (data.text || "").split(" ");
+      // Stream summary word-by-word (short, feels instant)
+      const words = (data.summary || data.detail || "").split(" ");
       let accumulated = "";
       for (let i = 0; i < words.length; i++) {
         accumulated += (i === 0 ? "" : " ") + words[i];
         const snap = accumulated;
         setMessages(prev => {
           const updated = [...prev];
-          updated[assistantIdx] = { role: "assistant", content: snap, citations: [] };
+          updated[assistantIdx] = { role: "assistant", content: snap, summary: "", detail: "", citations: [] };
           return updated;
         });
         await new Promise(r => setTimeout(r, 18 + Math.random() * 16));
       }
 
-      // Reveal citations after text finishes
+      // Reveal full message with expand capability
       setMessages(prev => {
         const updated = [...prev];
-        updated[assistantIdx] = { role: "assistant", content: data.text, citations: data.citations ?? [] };
+        updated[assistantIdx] = {
+          role:      "assistant",
+          content:   data.summary || data.detail || "",
+          summary:   data.summary || "",
+          detail:    data.detail  || "",
+          citations: data.citations ?? [],
+        };
         return updated;
       });
     } catch (err) {
       setMessages(prev => {
         const updated = [...prev];
         updated[assistantIdx] = {
-          role: "assistant",
-          content: "I'm sorry, I'm unable to answer right now. Please try again in a moment.",
-          citations: [],
+          role: "assistant", content: "I'm sorry, I'm unable to answer right now. Please try again in a moment.",
+          summary: "", detail: "", citations: [],
         };
         return updated;
       });
@@ -341,7 +373,8 @@ export default function ScholarlyPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", fontFamily: "inherit", paddingBottom: 58 }}>
       <style>{`
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         .input-wrap { transition: border-color 0.2s, box-shadow 0.2s; }
         .send-btn:hover:not(:disabled) { background: #157a3c !important; }
         .clear-btn:hover { background: rgba(255,255,255,0.25) !important; }

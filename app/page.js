@@ -3,20 +3,20 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "./components/BottomNav";
+import { BookIcon } from "./components/icons";
 import { getReviewStats, getStreak } from "../lib/hifzAnalytics";
+import { T } from "../lib/theme";
 
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
 const PRAYERS = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
 const DAILY_VERSES = [
-  { ar: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",                        en: "Indeed, with hardship comes ease.",          ref: "94:6"  },
-  { ar: "فَاذْكُرُونِي أَذْكُرْكُمْ",                          en: "Remember Me, and I will remember you.",      ref: "2:152" },
-  { ar: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا",     en: "Whoever fears Allah, He will find a way out.", ref: "65:2"  },
-  { ar: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",                    en: "Indeed, Allah is with the patient.",          ref: "2:153" },
-  { ar: "وَقُل رَّبِّ زِدْنِي عِلْمًا",                        en: "And say: My Lord, increase me in knowledge.", ref: "20:114"},
+  { ar: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",                        en: "Indeed, with hardship comes ease.",            ref: "94:6"  },
+  { ar: "فَاذْكُرُونِي أَذْكُرْكُمْ",                          en: "Remember Me, and I will remember you.",        ref: "2:152" },
+  { ar: "وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا",     en: "Whoever fears Allah, He will find a way out.",  ref: "65:2"  },
+  { ar: "إِنَّ اللَّهَ مَعَ الصَّابِرِينَ",                    en: "Indeed, Allah is with the patient.",            ref: "2:153" },
+  { ar: "وَقُل رَّبِّ زِدْنِي عِلْمًا",                        en: "And say: My Lord, increase me in knowledge.",   ref: "20:114"},
   { ar: "وَذَكِّرْ فَإِنَّ الذِّكْرَى تَنفَعُ الْمُؤْمِنِينَ", en: "Remind, for reminders benefit the believers.", ref: "51:55" },
-  { ar: "وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",            en: "Seek help through patience and prayer.",      ref: "2:45"  },
+  { ar: "وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",            en: "Seek help through patience and prayer.",        ref: "2:45"  },
 ];
 
 const SURAHS = [
@@ -94,28 +94,6 @@ function nextPrayerFrom(timings) {
   return PRAYERS.find((p) => parseMinutes(timings[p]) > cur) || PRAYERS[0];
 }
 
-function GeoPattern({ id, opacity = 0.12 }) {
-  return (
-    <svg
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity, pointerEvents: "none" }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern id={id} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-          <path d="M30 2 L58 30 L30 58 L2 30 Z" fill="none" stroke="white" strokeWidth="0.8" />
-          <path d="M30 16 L44 30 L30 44 L16 30 Z" fill="none" stroke="white" strokeWidth="0.5" />
-          <circle cx="30" cy="30" r="2"   fill="white" />
-          <circle cx="0"  cy="0"  r="1.5" fill="white" />
-          <circle cx="60" cy="0"  r="1.5" fill="white" />
-          <circle cx="0"  cy="60" r="1.5" fill="white" />
-          <circle cx="60" cy="60" r="1.5" fill="white" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`} />
-    </svg>
-  );
-}
-
 function formatCountdown(ms) {
   if (!ms || ms <= 0) return null;
   const h = Math.floor(ms / (60 * 60 * 1000));
@@ -190,354 +168,303 @@ export default function Home() {
   const hijriStr   = hijri ? `${hijri.day} ${hijri.month.en} ${hijri.year} AH` : "";
 
   return (
-    <>
-      <style>{`
-        .ask-input:focus { outline: none; }
-        .ask-input::placeholder { color: #a0aec0; }
-        .send-btn:hover:not(:disabled) { background: #157a3c !important; }
-        .practice-btn:hover { background: ${G} !important; color: #fff !important; }
-        ::-webkit-scrollbar { display: none; }
-      `}</style>
+    <div style={{ minHeight: "100vh", background: T.bgPage, paddingBottom: 80 }}>
 
-      <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
-
-        {/* ── Top bar ── */}
-        <nav style={{
-          background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
-          width: "100%",
-          boxShadow: "0 2px 16px rgba(26,138,74,0.28)",
-          position: "relative",
-          overflow: "hidden",
+      {/* ── Header bar ── */}
+      <header style={{
+        background: T.bgCard,
+        borderBottom: `1px solid ${T.border}`,
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{
+          maxWidth: 680, margin: "0 auto",
+          padding: "14px 20px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <GeoPattern id="geoNav" opacity={0.13} />
-          <div style={{
-            maxWidth: 680, margin: "0 auto", padding: "14px 20px 16px",
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            position: "relative", zIndex: 1,
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: "#fff", fontSize: 20, fontWeight: 800, lineHeight: 1.15 }}>
-                Ihsan <span style={{ fontFamily: "Amiri, serif", fontWeight: 400 }}>إحسان</span>
-              </div>
-              {hijriStr && (
-                <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 3, letterSpacing: "0.03em" }}>
-                  {hijriStr}
-                </div>
-              )}
+          {/* Wordmark */}
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 800, color: T.textPrimary, letterSpacing: "-0.3px" }}>
+                Ihsan
+              </span>
+              <span style={{ fontFamily: T.fontArabic, fontSize: 18, color: T.green, fontWeight: 400 }}>
+                إحسان
+              </span>
             </div>
-            {mounted && streak > 0 && (
-              <div style={{
-                display: "flex", alignItems: "center", gap: 5,
-                background: "rgba(255,255,255,0.18)",
-                borderRadius: 20, padding: "5px 12px",
-              }}>
-                <span style={{ fontSize: 14 }}>🔥</span>
-                <span style={{ color: "#fff", fontSize: 13, fontWeight: 800 }}>{streak}</span>
-              </div>
-            )}
-            <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 22 }}>☽</span>
-          </div>
-        </nav>
-
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-
-          {/* ── Scholarly.AI Prompt ── */}
-          <div style={{ padding: "28px 20px 20px" }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 10 }}>
-              Scholarly.Ai ✦
-            </p>
-            <p style={{ fontSize: 22, fontWeight: 800, color: "#111827", marginBottom: 20, lineHeight: 1.25, letterSpacing: "-0.3px" }}>
-              Ask any Islamic question
-            </p>
-            <form onSubmit={handleAsk} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{
-                flex: 1, display: "flex", alignItems: "center",
-                background: "#fff",
-                border: "2px solid #e5e7eb",
-                borderRadius: 14,
-                padding: "0 14px",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-                transition: "border-color 0.2s",
-              }}
-                onFocusCapture={e => e.currentTarget.style.borderColor = G}
-                onBlurCapture={e => e.currentTarget.style.borderColor = "#e5e7eb"}
-              >
-                <input
-                  ref={inputRef}
-                  className="ask-input"
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Ask any Islamic question..."
-                  style={{
-                    flex: 1, border: "none", background: "transparent",
-                    fontSize: 15, color: "#111827", padding: "14px 0",
-                    fontFamily: "inherit",
-                  }}
-                />
-              </div>
-              <button
-                type="submit"
-                className="send-btn"
-                style={{
-                  flexShrink: 0, width: 48, height: 48,
-                  background: G, color: "#fff",
-                  border: "none", borderRadius: 12,
-                  fontSize: 20, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 4px 14px rgba(26,138,74,0.35)",
-                  transition: "background 0.15s",
-                }}
-              >
-                ➤
-              </button>
-            </form>
-          </div>
-
-          <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />
-
-          {/* ── Continue Memorizing ── */}
-          <div style={{ padding: "20px 20px 0" }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
-              Hifz Progress
-            </p>
-            {mounted && lastSurah ? (
-              <div style={{
-                background: "#fff",
-                borderRadius: 16,
-                padding: "18px 18px 16px",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-                border: `1px solid ${G}18`,
-                display: "flex", alignItems: "center", gap: 14,
-              }}>
-                <div style={{
-                  flexShrink: 0, width: 50, height: 50, borderRadius: 12,
-                  background: `linear-gradient(135deg, ${G}, ${G2})`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontSize: 22,
-                }}>📖</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#111827", marginBottom: 2 }}>
-                    {lastSurah.name}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>
-                    {lastSurah.memorized} memorized · {lastSurah.inProgress} in progress
-                  </div>
-                  <div style={{ height: 5, background: "#f3f4f6", borderRadius: 999, overflow: "hidden" }}>
-                    <div style={{
-                      height: "100%", borderRadius: 999,
-                      background: `linear-gradient(90deg, ${G}, ${G2})`,
-                      width: `${Math.round((lastSurah.memorized / lastSurah.total) * 100)}%`,
-                    }} />
-                  </div>
-                </div>
-                <a href="/hifz" style={{ textDecoration: "none", flexShrink: 0 }}>
-                  <div className="practice-btn" style={{
-                    background: "#ecfdf3", color: G,
-                    border: `1px solid ${G}30`,
-                    fontWeight: 700, fontSize: 12,
-                    padding: "9px 14px", borderRadius: 10,
-                    whiteSpace: "nowrap", cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}>
-                    Practice
-                  </div>
-                </a>
-              </div>
-            ) : (
-              <div style={{
-                background: "#fff",
-                borderRadius: 16,
-                padding: "18px 18px 16px",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-                border: `1px solid ${G}18`,
-                display: "flex", alignItems: "center", gap: 14,
-              }}>
-                <div style={{
-                  flexShrink: 0, width: 50, height: 50, borderRadius: 12,
-                  background: "#f3f4f6",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22,
-                }}>📖</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 3 }}>
-                    Start memorizing the Quran
-                  </div>
-                  <div style={{ fontSize: 12, color: "#9ca3af" }}>Track your hifz progress surah by surah</div>
-                </div>
-                <a href="/hifz" style={{ textDecoration: "none", flexShrink: 0 }}>
-                  <div className="practice-btn" style={{
-                    background: "#ecfdf3", color: G,
-                    border: `1px solid ${G}30`,
-                    fontWeight: 700, fontSize: 12,
-                    padding: "9px 14px", borderRadius: 10,
-                    whiteSpace: "nowrap", cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}>
-                    Begin
-                  </div>
-                </a>
+            {hijriStr && (
+              <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>
+                {hijriStr}
               </div>
             )}
           </div>
 
-          {/* ── Today's Review ── */}
-          {mounted && (
-            <div style={{ padding: "16px 20px 0" }}>
-              <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
-                Today's Review
-              </p>
+          {/* Streak pill */}
+          {mounted && streak > 0 && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: T.goldLight,
+              borderRadius: T.radiusFull,
+              padding: "5px 12px",
+            }}>
+              <span style={{ color: T.gold, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>Day</span>
+              <span style={{ color: T.amber, fontSize: 13, fontWeight: 800 }}>{streak}</span>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
+
+        {/* ── Daily Verse — spiritual anchor ── */}
+        <div style={{ padding: "36px 24px 28px", textAlign: "center" }}>
+          <p style={{
+            fontFamily: T.fontArabic,
+            fontSize: 26,
+            direction: "rtl",
+            lineHeight: 2.2,
+            color: T.textPrimary,
+            margin: "0 0 12px",
+          }}>
+            {dailyVerse.ar}
+          </p>
+          <p style={{
+            fontSize: 14,
+            color: T.textSecondary,
+            fontStyle: "italic",
+            lineHeight: 1.7,
+            margin: "0 0 10px",
+          }}>
+            {dailyVerse.en}
+          </p>
+          <span style={{ fontSize: 11, color: T.green, fontWeight: 600, letterSpacing: "0.04em" }}>
+            {dailyVerse.ref}
+          </span>
+        </div>
+
+        <div className="divider" style={{ margin: "0 24px" }} />
+
+        {/* ── Today's Review ── */}
+        {mounted && (
+          <div style={{ padding: "24px 20px 0" }}>
+            {reviewStats.due > 0 ? (
               <a href="/hifz/review" style={{ textDecoration: "none", display: "block" }}>
-                {reviewStats.due > 0 ? (
-                  /* ── Due: full gradient hero card ── */
-                  <div style={{
-                    background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
-                    borderRadius: 18,
-                    padding: "20px 20px 18px",
-                    boxShadow: "0 6px 24px rgba(26,138,74,0.3)",
-                    position: "relative", overflow: "hidden",
-                  }}>
-                    <GeoPattern id="reviewHero" opacity={0.1} />
-                    <div style={{ position: "relative", zIndex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
-                        <div>
-                          <div style={{ fontSize: 28, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.5px" }}>
-                            {reviewStats.due}
-                          </div>
-                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>
-                            ayah{reviewStats.due !== 1 ? "s" : ""} due for review
-                          </div>
-                        </div>
-                        <div style={{
-                          background: "rgba(255,255,255,0.2)",
-                          borderRadius: 12, padding: "10px 18px",
-                          color: "#fff", fontSize: 14, fontWeight: 800,
-                        }}>
-                          Begin →
-                        </div>
+                <div style={{
+                  background: T.greenMuted,
+                  borderRadius: T.radiusLg,
+                  padding: "24px",
+                  border: `1px solid rgba(26,138,74,0.18)`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <span style={{ fontSize: 42, fontWeight: 900, color: T.greenDark, lineHeight: 1, letterSpacing: "-1px" }}>
+                        {reviewStats.due}
+                      </span>
+                      <div style={{ fontSize: 14, color: T.green, fontWeight: 600, marginTop: 4 }}>
+                        ayah{reviewStats.due !== 1 ? "s" : ""} ready for review
                       </div>
                       {reviewStats.weak > 0 && (
-                        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+                        <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 6 }}>
                           {reviewStats.weak} weak ayah{reviewStats.weak !== 1 ? "s" : ""} to strengthen
                         </div>
                       )}
                     </div>
-                  </div>
-                ) : (
-                  /* ── Clear: minimal white card ── */
-                  <div style={{
-                    background: "#fff",
-                    borderRadius: 16,
-                    padding: "16px 18px",
-                    boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-                    border: `1px solid ${G}18`,
-                    display: "flex", alignItems: "center", gap: 14,
-                  }}>
                     <div style={{
-                      flexShrink: 0, width: 44, height: 44, borderRadius: 11,
-                      background: `linear-gradient(135deg, ${G}, ${G2})`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontSize: 20,
+                      background: T.green,
+                      color: T.textInverse,
+                      borderRadius: T.radiusMd,
+                      padding: "10px 18px",
+                      fontSize: 14,
+                      fontWeight: 700,
                     }}>
-                      ✓
+                      Begin →
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>Review queue is clear</div>
-                      <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
-                        {reviewStats.nextReviewMs
-                          ? `Next review in ${formatCountdown(reviewStats.nextReviewMs)}`
-                          : "Review weak ayahs to keep improving"}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: G }}>Browse</div>
                   </div>
-                )}
+                </div>
               </a>
-            </div>
-          )}
-
-          {/* ── Daily Verse ── */}
-          <div style={{ padding: "16px 20px 0" }}>
-            <div style={{
-              background: "#fff",
-              borderRadius: 14,
-              padding: "16px 18px",
-              boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
-              border: `1px solid ${G}12`,
-            }}>
-              <p style={{ margin: "0 0 10px", fontSize: 9, fontWeight: 800, color: G, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                Verse of the Day · {dailyVerse.ref}
-              </p>
-              <p style={{
-                margin: "0 0 8px", fontFamily: "Amiri, serif", fontSize: 20,
-                direction: "rtl", textAlign: "right", lineHeight: 1.9,
-                color: "#111827",
-              }}>
-                {dailyVerse.ar}
-              </p>
-              <p style={{ margin: 0, fontSize: 12, color: "#6b7280", lineHeight: 1.5, fontStyle: "italic" }}>
-                {dailyVerse.en}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ height: 20 }} />
-          <div style={{ height: 4, background: "#f0f0f0", margin: "0 20px", borderRadius: 99 }} />
-
-          {/* ── Prayer Times ── */}
-          <div style={{ padding: "20px 20px 0" }}>
-            <p style={{ fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12 }}>
-              Prayer Times
-            </p>
-            {prayerErr ? (
-              <div style={{ padding: "14px 16px", background: "#fff", borderRadius: 12, fontSize: 13, color: "#9ca3af" }}>
-                {prayerErr}
-              </div>
-            ) : !prayerData ? (
-              <div style={{
-                background: "#fff", borderRadius: 12, padding: "12px 16px",
-                display: "flex", gap: 8,
-              }}>
-                {PRAYERS.map(p => (
-                  <div key={p} style={{
-                    flex: 1, height: 44, borderRadius: 8,
-                    background: "#f3f4f6", animation: "pulse 1.5s infinite",
-                  }} />
-                ))}
-              </div>
             ) : (
               <div style={{
-                background: "#fff",
-                borderRadius: 12,
-                padding: "10px 10px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                display: "flex", gap: 6,
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "14px 0",
               }}>
-                {PRAYERS.map(p => {
-                  const active = p === nextPrayer;
-                  return (
-                    <div key={p} style={{
-                      flex: 1, padding: "8px 4px", borderRadius: 8, textAlign: "center",
-                      background: active ? G : "transparent",
-                    }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: active ? "rgba(255,255,255,0.8)" : "#9ca3af", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                        {p}
-                      </div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: active ? "#fff" : "#374151" }}>
-                        {toAmPm(prayerData.timings[p])}
-                      </div>
-                    </div>
-                  );
-                })}
+                <span style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: T.greenMuted,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, color: T.green, fontWeight: 700,
+                  flexShrink: 0,
+                }}>✓</span>
+                <span style={{ fontSize: 14, color: T.textSecondary }}>
+                  {reviewStats.nextReviewMs
+                    ? `Review queue clear · next in ${formatCountdown(reviewStats.nextReviewMs)}`
+                    : "Review queue clear for today"}
+                </span>
+                <a href="/hifz/review" style={{ marginLeft: "auto", fontSize: 13, fontWeight: 600, color: T.green, textDecoration: "none", flexShrink: 0 }}>
+                  Browse →
+                </a>
               </div>
             )}
           </div>
+        )}
 
-          <div style={{ height: 24 }} />
-
+        {/* ── Ask Scholarly.AI ── */}
+        <div style={{ padding: "24px 20px 0" }}>
+          <form onSubmit={handleAsk}>
+            <div style={{
+              display: "flex", alignItems: "center",
+              background: T.bgInset,
+              border: `1.5px solid ${T.border}`,
+              borderRadius: T.radiusMd,
+              padding: "0 6px 0 16px",
+              transition: "border-color 0.18s, box-shadow 0.18s",
+            }}
+              onFocusCapture={e => { e.currentTarget.style.borderColor = T.green; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(26,138,74,0.08)"; }}
+              onBlurCapture={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.boxShadow = "none"; }}
+            >
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="What does the Quran say about…"
+                style={{
+                  flex: 1, border: "none", background: "transparent",
+                  fontSize: 15, color: T.textPrimary, padding: "15px 0",
+                  fontFamily: "inherit", outline: "none",
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  flexShrink: 0, width: 40, height: 40,
+                  background: query.trim() ? T.green : T.bgSubtle,
+                  color: query.trim() ? T.textInverse : T.textTertiary,
+                  border: "none", borderRadius: T.radiusSm,
+                  fontSize: 16, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.15s, color 0.15s",
+                }}
+              >
+                →
+              </button>
+            </div>
+          </form>
         </div>
 
-        <BottomNav />
+        {/* ── Hifz Progress (quiet inline row) ── */}
+        {mounted && (
+          <div style={{ padding: "24px 20px 0" }}>
+            <a href="/hifz" style={{ textDecoration: "none" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "16px 18px",
+                background: T.bgCard,
+                borderRadius: T.radiusMd,
+                border: `1px solid ${T.border}`,
+                boxShadow: T.shadowSm,
+              }}>
+                {/* Book icon */}
+                <div style={{
+                  flexShrink: 0, width: 42, height: 42, borderRadius: T.radiusSm,
+                  background: lastSurah ? T.greenMuted : T.bgSubtle,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <BookIcon color={lastSurah ? T.green : T.textTertiary} size={22} />
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {lastSurah ? (
+                    <>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: T.textPrimary, marginBottom: 3 }}>
+                        {lastSurah.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: T.textTertiary, marginBottom: 6 }}>
+                        {lastSurah.memorized} memorised · {lastSurah.inProgress} in progress
+                      </div>
+                      <div style={{ height: 4, background: T.bgSubtle, borderRadius: T.radiusFull, overflow: "hidden" }}>
+                        <div style={{
+                          height: "100%", borderRadius: T.radiusFull,
+                          background: T.green,
+                          width: `${Math.round((lastSurah.memorized / lastSurah.total) * 100)}%`,
+                          transition: "width 0.6s ease",
+                        }} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary }}>
+                        Start memorising
+                      </div>
+                      <div style={{ fontSize: 12, color: T.textTertiary, marginTop: 2 }}>
+                        Track your hifz surah by surah
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <span style={{ fontSize: 13, fontWeight: 600, color: T.green, flexShrink: 0 }}>
+                  {lastSurah ? "Continue" : "Begin"} →
+                </span>
+              </div>
+            </a>
+          </div>
+        )}
+
+        {/* ── Prayer Times ── */}
+        <div style={{ padding: "24px 20px 0" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T.textTertiary, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
+            Prayer Times
+          </div>
+          {prayerErr ? (
+            <p style={{ fontSize: 13, color: T.textTertiary, margin: 0, padding: "8px 0" }}>{prayerErr}</p>
+          ) : !prayerData ? (
+            <div style={{ display: "flex", gap: 6 }}>
+              {PRAYERS.map(p => (
+                <div key={p} style={{
+                  flex: 1, height: 52, borderRadius: T.radiusSm,
+                  background: T.bgSubtle,
+                }} className="animate-shimmer" />
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              display: "flex", gap: 4,
+              background: T.bgSubtle,
+              borderRadius: T.radiusMd,
+              padding: 4,
+            }}>
+              {PRAYERS.map(p => {
+                const active = p === nextPrayer;
+                return (
+                  <div key={p} style={{
+                    flex: 1, padding: "8px 4px", borderRadius: T.radiusSm, textAlign: "center",
+                    background: active ? T.green : "transparent",
+                    transition: "background 0.2s",
+                  }}>
+                    <div style={{
+                      fontSize: 9, fontWeight: 700,
+                      color: active ? "rgba(255,255,255,0.75)" : T.textTertiary,
+                      textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
+                    }}>
+                      {p}
+                    </div>
+                    <div style={{
+                      fontSize: 11, fontWeight: 600,
+                      color: active ? T.textInverse : T.textSecondary,
+                    }}>
+                      {toAmPm(prayerData.timings[p])}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div style={{ height: 16 }} />
       </div>
-    </>
+
+      <BottomNav />
+    </div>
   );
 }

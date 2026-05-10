@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
+import { T } from "../../lib/theme";
 
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
+const G  = T.green;
+const G2 = T.greenLight;
 
 function GeoPattern({ id, opacity = 0.12 }) {
   return (
@@ -81,34 +82,22 @@ export default function LibraryPage() {
   return (
     <>
       <style>{`::-webkit-scrollbar { display: none; }`}</style>
-      <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
+      <div style={{ minHeight: "100vh", background: T.bgPage, paddingBottom: 80 }}>
 
-        {/* Navbar */}
-        <nav style={{
-          background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
-          width: "100%",
-          boxShadow: "0 2px 16px rgba(26,138,74,0.28)",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          <GeoPattern id="geoLibNav" opacity={0.13} />
-          <div style={{
-            maxWidth: 680, margin: "0 auto", padding: "14px 20px 16px",
-            display: "flex", alignItems: "center", gap: 12,
-            position: "relative", zIndex: 1,
-          }}>
-            <div>
-              <div style={{ color: "#fff", fontSize: 19, fontWeight: 700, lineHeight: 1.2 }}>Library</div>
-              <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 3 }}>Islamic reference tools</div>
-            </div>
+        {/* Header */}
+        <header style={{ background: T.bgCard, borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 100 }}>
+          <div style={{ maxWidth: 680, margin: "0 auto", padding: "14px 20px" }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Library</div>
+            <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>Islamic reference tools</div>
           </div>
-        </nav>
+        </header>
 
         <div style={{ maxWidth: 680, margin: "0 auto", padding: "20px 20px 0" }}>
           <div style={{
-            background: "#fff",
-            borderRadius: 16,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            background: T.bgCard,
+            borderRadius: T.radiusMd,
+            border: `1px solid ${T.border}`,
+            boxShadow: T.shadowSm,
             overflow: "hidden",
           }}>
             {ITEMS.map(({ href, label, sub, icon }, i) => (
@@ -116,26 +105,26 @@ export default function LibraryPage() {
                 <div style={{
                   display: "flex", alignItems: "center", gap: 14,
                   padding: "16px 18px",
-                  borderBottom: i < ITEMS.length - 1 ? "1px solid #f3f4f6" : "none",
+                  borderBottom: i < ITEMS.length - 1 ? `1px solid ${T.border}` : "none",
                   cursor: "pointer",
                   transition: "background 0.12s",
                 }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+                  onMouseEnter={e => e.currentTarget.style.background = T.bgSubtle}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 >
                   <div style={{
-                    flexShrink: 0, width: 44, height: 44, borderRadius: 12,
-                    background: G + "12",
+                    flexShrink: 0, width: 44, height: 44, borderRadius: T.radiusSm,
+                    background: T.greenMuted,
                     display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
                     {icon}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 2 }}>{label}</div>
-                    <div style={{ fontSize: 12, color: "#9ca3af" }}>{sub}</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: T.textPrimary, marginBottom: 2 }}>{label}</div>
+                    <div style={{ fontSize: 12, color: T.textTertiary }}>{sub}</div>
                   </div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 18l6-6-6-6" stroke="#d1d5db" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M9 18l6-6-6-6" stroke={T.borderStrong} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
               </Link>

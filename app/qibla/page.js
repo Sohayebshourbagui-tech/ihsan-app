@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
+import { KaabaIcon, RefreshIcon } from "../components/icons";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -204,8 +205,13 @@ function CompassDial({ qiblaAngle, deviceHeading, hasOrientation }) {
           <circle cx={cx} cy={cy} r={10} fill="white" stroke="#e0e0e0" strokeWidth="1.5" />
           <circle cx={cx} cy={cy} r={4.5} fill={G} />
 
-          {/* Kaaba emoji at needle tip */}
-          <text x={cx} y={cy - 94} textAnchor="middle" fontSize={22} style={{ userSelect: "none" }}>🕋</text>
+          {/* Kaaba cube at needle tip */}
+          <g transform={`translate(${cx - 9}, ${cy - 112})`}>
+            <rect x="1" y="6" width="13" height="12" stroke={G} strokeWidth="1.5" fill="none" />
+            <path d="M1 6 L6 2 L20 2 L15 6Z" stroke={G} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+            <path d="M14 6 L20 2 L20 14 L14 18" stroke={G} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+            <line x1="1" y1="10" x2="14" y2="10" stroke={G} strokeWidth="1.2" />
+          </g>
         </svg>
       </div>
     </div>
@@ -330,7 +336,6 @@ export default function QiblaPage() {
                 Direction to the Kaaba
               </div>
             </div>
-            <div style={{ marginLeft: "auto", fontSize: 22 }}>🧭</div>
           </div>
         </nav>
 
@@ -344,7 +349,9 @@ export default function QiblaPage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
               textAlign: "center",
             }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📍</div>
+              <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+                <KaabaIcon color="#9ca3af" size={48} strokeWidth={1.2} />
+              </div>
               <p style={{ fontSize: 15, fontWeight: 600, color: "#444", marginBottom: 6 }}>
                 Getting your location…
               </p>
@@ -363,7 +370,9 @@ export default function QiblaPage() {
               textAlign: "center",
               borderTop: "4px solid #e53e3e",
             }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
+              <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+                <KaabaIcon color="#e53e3e" size={48} strokeWidth={1.2} />
+              </div>
               <p style={{ fontSize: 16, fontWeight: 700, color: "#1a1a1a", marginBottom: 10 }}>
                 Location Access Required
               </p>
@@ -423,7 +432,8 @@ export default function QiblaPage() {
                       fontSize: 13, fontWeight: 700, cursor: "pointer",
                     }}
                   >
-                    🔄 Enable Live Compass
+                    <RefreshIcon color="#fff" size={16} strokeWidth={2} />
+                    Enable Live Compass
                   </button>
                 )}
                 {orientPerm === "denied" && (
@@ -438,7 +448,7 @@ export default function QiblaPage() {
                 )}
                 {hasOrientation && (
                   <p style={{ marginTop: 14, fontSize: 12, color: G, fontWeight: 700 }}>
-                    ● Live compass active — rotate until 🕋 points straight up
+                    ● Live compass active — rotate until the Kaaba needle points straight up
                   </p>
                 )}
               </div>
@@ -449,16 +459,15 @@ export default function QiblaPage() {
                 display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10,
               }}>
                 {[
-                  { icon: "🌍", value: `${distance.toLocaleString()} km`, label: "Distance" },
-                  { icon: "📍", value: city || "Detected",                label: "Location"    },
-                  { icon: "🧭", value: `${Math.round(qiblaAngle)}°`,      label: "Qibla Angle" },
-                ].map(({ icon, value, label }) => (
+                  { value: `${distance.toLocaleString()} km`, label: "Distance" },
+                  { value: city || "Detected",                label: "Location"    },
+                  { value: `${Math.round(qiblaAngle)}°`,      label: "Qibla Angle" },
+                ].map(({ value, label }) => (
                   <div key={label} style={{
                     background: "#fff", borderRadius: 14,
                     padding: "14px 10px", textAlign: "center",
                     boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
                   }}>
-                    <div style={{ fontSize: 20, marginBottom: 6 }}>{icon}</div>
                     <div style={{
                       fontSize: 13, fontWeight: 800, color: "#1a1a1a",
                       marginBottom: 3, wordBreak: "break-word",
@@ -483,13 +492,13 @@ export default function QiblaPage() {
                   letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12,
                 }}>How to Use</p>
                 {[
-                  ["📱", "Hold your phone flat and level in your palm."],
-                  ["🔄", "Slowly rotate your body until the 🕋 needle points straight up."],
-                  ["📡", "On mobile, the compass ring rotates live with your device heading."],
-                  ["💻", "On desktop, use the degree shown above to orient yourself manually."],
-                ].map(([icon, text]) => (
+                  "Hold your phone flat and level in your palm.",
+                  "Slowly rotate your body until the Kaaba needle points straight up.",
+                  "On mobile, the compass ring rotates live with your device heading.",
+                  "On desktop, use the degree shown above to orient yourself manually.",
+                ].map((text) => (
                   <div key={text} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>{icon}</span>
+                    <span style={{ color: G, fontWeight: 800, flexShrink: 0, fontSize: 14, lineHeight: "1.65" }}>·</span>
                     <span style={{ fontSize: 13, color: "#555", lineHeight: 1.65 }}>{text}</span>
                   </div>
                 ))}

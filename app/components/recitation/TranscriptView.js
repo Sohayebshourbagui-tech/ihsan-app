@@ -1,16 +1,16 @@
 "use client";
 
-const G = "#1a8a4a";
+import { T } from "../../../lib/theme";
 
 const STATUS_STYLES = {
-  matched:   { color: "#15803d", bg: "rgba(21,128,61,0.13)",   border: "#15803d",  dashed: false },
-  correct:   { color: "#15803d", bg: "rgba(21,128,61,0.13)",   border: "#15803d",  dashed: false },
-  close:     { color: "#92400e", bg: "rgba(217,119,6,0.12)",   border: "#d97706",  dashed: false },
-  wrong:     { color: "#b91c1c", bg: "rgba(220,38,38,0.10)",   border: "#ef4444",  dashed: false },
-  missing:   { color: "#9ca3af", bg: "rgba(156,163,175,0.07)", border: "#d1d5db",  dashed: true  },
-  missed:    { color: "#9ca3af", bg: "rgba(156,163,175,0.07)", border: "#d1d5db",  dashed: true  },
-  incorrect: { color: "#c2410c", bg: "rgba(234,88,12,0.10)",   border: "#fb923c",  dashed: false },
-  pending:   { color: "#9ca3af", bg: "rgba(156,163,175,0.05)", border: "transparent", dashed: false },
+  matched:   { color: T.green,        bg: "rgba(26,138,74,0.1)",   border: T.green,        dashed: false },
+  correct:   { color: T.green,        bg: "rgba(26,138,74,0.1)",   border: T.green,        dashed: false },
+  close:     { color: T.amber,        bg: "rgba(180,83,9,0.08)",   border: T.amber,        dashed: false },
+  wrong:     { color: T.red,          bg: "rgba(192,57,43,0.08)",  border: T.red,          dashed: false },
+  missing:   { color: T.textTertiary, bg: "rgba(168,162,158,0.07)",border: T.border,       dashed: true  },
+  missed:    { color: T.textTertiary, bg: "rgba(168,162,158,0.07)",border: T.border,       dashed: true  },
+  incorrect: { color: T.red,          bg: "rgba(192,57,43,0.08)",  border: T.red,          dashed: false },
+  pending:   { color: T.textTertiary, bg: "transparent",           border: "transparent",  dashed: false },
 };
 
 function WordSpan({ word, status }) {
@@ -36,7 +36,7 @@ function HighlightedArabic({ words, fontSize = 22 }) {
   return (
     <p style={{
       margin: 0,
-      fontFamily: "Amiri, serif",
+      fontFamily: T.fontArabic,
       fontSize,
       lineHeight: 2.3,
       direction: "rtl",
@@ -53,76 +53,71 @@ function HighlightedArabic({ words, fontSize = 22 }) {
 }
 
 const SCORE_FEEDBACK = [
-  { min: 93, text: "Excellent recitation.",        sub: "This ayah is well-retained.",              emoji: "✓"  },
-  { min: 80, text: "Very good.",                   sub: "A few words to refine.",                   emoji: "↑"  },
-  { min: 65, text: "Good effort.",                 sub: "Review once more for consistency.",         emoji: "→"  },
-  { min: 50, text: "Keep practicing.",             sub: "Repetition builds strong memory.",          emoji: "↻"  },
-  { min: 0,  text: "More practice needed.",        sub: "Focus on this ayah carefully.",             emoji: "↻"  },
+  { min: 93, text: "Excellent recitation.",     sub: "This ayah is well-retained.",         emoji: "✓" },
+  { min: 80, text: "Very good.",                sub: "A few words to refine.",               emoji: "↑" },
+  { min: 65, text: "Good effort.",              sub: "Review once more for consistency.",    emoji: "→" },
+  { min: 50, text: "Keep practising.",          sub: "Repetition builds strong memory.",     emoji: "↻" },
+  { min: 0,  text: "More practice needed.",     sub: "Focus on this ayah carefully.",        emoji: "↻" },
 ];
 
 function ScoreCard({ comparison }) {
   const { score, passed, matched, missing, incorrect } = comparison;
   const fb = SCORE_FEEDBACK.find(f => score >= f.min) ?? SCORE_FEEDBACK[SCORE_FEEDBACK.length - 1];
+  const scoreColor = passed ? T.green : T.red;
+  const scoreBg    = passed ? T.greenMuted : T.redBg;
 
   return (
     <div style={{
-      background: passed
-        ? "linear-gradient(135deg, #14532d 0%, #166534 55%, #15803d 100%)"
-        : "linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #dc2626 100%)",
-      borderRadius: 18,
-      padding: "16px 20px 14px",
+      background: T.bgCard,
+      borderRadius: T.radiusMd,
+      border: `1px solid ${T.border}`,
+      padding: "20px",
       marginBottom: 14,
     }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 12, marginBottom: 12 }}>
         <span style={{
-          fontSize: 52, fontWeight: 900, color: "#fff", lineHeight: 1,
+          fontSize: 52, fontWeight: 900, color: scoreColor, lineHeight: 1,
           letterSpacing: "-2px", fontVariantNumeric: "tabular-nums",
         }}>
           {score}
         </span>
-        <div style={{ paddingBottom: 5, flex: 1 }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: "0.12em", color: "rgba(255,255,255,0.6)", textTransform: "uppercase", marginBottom: 2 }}>
-            score
-          </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2 }}>
+        <div style={{ paddingBottom: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary, lineHeight: 1.3 }}>
             {fb.text}
           </div>
-        </div>
-        <div style={{
-          width: 36, height: 36,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.18)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 16, color: "#fff", fontWeight: 900,
-          flexShrink: 0,
-        }}>
-          {fb.emoji}
+          <div style={{ fontSize: 12, color: T.textTertiary, marginTop: 2 }}>
+            {fb.sub}
+          </div>
         </div>
       </div>
 
-      <div style={{
-        borderTop: "1px solid rgba(255,255,255,0.15)",
-        paddingTop: 10,
-        display: "flex", gap: 12, flexWrap: "wrap",
-      }}>
-        <span style={{ fontSize: 12, color: "#bbf7d0", fontWeight: 600 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <span style={{
+          fontSize: 11, fontWeight: 600,
+          background: T.greenMuted, color: T.green,
+          padding: "3px 10px", borderRadius: T.radiusFull,
+        }}>
           {matched} matched
         </span>
         {missing > 0 && (
-          <span style={{ fontSize: 12, color: "#fca5a5", fontWeight: 600 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600,
+            background: T.redBg, color: T.red,
+            padding: "3px 10px", borderRadius: T.radiusFull,
+          }}>
             {missing} missed
           </span>
         )}
         {incorrect > 0 && (
-          <span style={{ fontSize: 12, color: "#fde68a", fontWeight: 600 }}>
+          <span style={{
+            fontSize: 11, fontWeight: 600,
+            background: T.amberBg, color: T.amber,
+            padding: "3px 10px", borderRadius: T.radiusFull,
+          }}>
             {incorrect} extra
           </span>
         )}
       </div>
-
-      <p style={{ margin: "8px 0 0", fontSize: 11, color: "rgba(255,255,255,0.55)", fontStyle: "italic" }}>
-        {fb.sub}
-      </p>
     </div>
   );
 }
@@ -134,25 +129,24 @@ export default function TranscriptView({ expected, transcript, listening, compar
   return (
     <>
       <style>{`
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
         .transcript-blink { animation: blink 1.1s ease-in-out infinite; }
       `}</style>
 
       {hasResult && <ScoreCard comparison={comparison} />}
 
-      {/* Expected ayah — shows live word highlighting while recording */}
+      {/* Expected ayah */}
       <div style={{
-        background: "#f0fdf4",
-        border: `1.5px solid ${hasLive ? G + "60" : "#bbf7d0"}`,
-        borderRadius: 14,
+        background: hasLive ? "rgba(26,138,74,0.04)" : T.bgSubtle,
+        border: `1.5px solid ${hasLive ? T.green + "50" : T.border}`,
+        borderRadius: T.radiusMd,
         padding: "14px 16px",
         marginBottom: 10,
-        transition: "border-color 0.3s ease",
+        transition: "border-color 0.3s, background 0.3s",
       }}>
         <p style={{
-          margin: "0 0 8px",
-          fontSize: 10, fontWeight: 800, color: G,
-          letterSpacing: "0.09em", textTransform: "uppercase",
+          margin: "0 0 10px",
+          fontSize: 10, fontWeight: 700, color: T.textTertiary,
+          letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           {hasLive ? "Live feedback" : "Expected"}
         </p>
@@ -160,19 +154,12 @@ export default function TranscriptView({ expected, transcript, listening, compar
         {hasResult ? (
           <HighlightedArabic words={comparison.expectedWords} fontSize={22} />
         ) : hasLive ? (
-          <HighlightedArabic
-            words={liveWords.map(w => ({ word: w.word, status: w.status }))}
-            fontSize={22}
-          />
+          <HighlightedArabic words={liveWords.map(w => ({ word: w.word, status: w.status }))} fontSize={22} />
         ) : (
           <p style={{
-            margin: 0,
-            fontFamily: "Amiri, serif",
-            fontSize: 22,
-            lineHeight: 1.9,
-            color: "#111827",
-            direction: "rtl",
-            textAlign: "right",
+            margin: 0, fontFamily: T.fontArabic,
+            fontSize: 22, lineHeight: 2.0,
+            color: T.textPrimary, direction: "rtl", textAlign: "right",
           }}>
             {expected || "—"}
           </p>
@@ -181,20 +168,18 @@ export default function TranscriptView({ expected, transcript, listening, compar
 
       {/* Your recitation */}
       <div style={{
-        background: "#f9fafb",
-        border: `1.5px solid ${listening ? G + "35" : "#e5e7eb"}`,
-        borderRadius: 14,
+        background: T.bgCard,
+        border: `1.5px solid ${listening ? T.green + "30" : T.border}`,
+        borderRadius: T.radiusMd,
         padding: "14px 16px",
         minHeight: 76,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-start",
-        transition: "border-color 0.3s ease",
+        display: "flex", flexDirection: "column",
+        transition: "border-color 0.3s",
       }}>
         <p style={{
-          margin: "0 0 8px",
-          fontSize: 10, fontWeight: 800, color: "#6b7280",
-          letterSpacing: "0.09em", textTransform: "uppercase",
+          margin: "0 0 10px",
+          fontSize: 10, fontWeight: 700, color: T.textTertiary,
+          letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           Your Recitation
         </p>
@@ -203,21 +188,16 @@ export default function TranscriptView({ expected, transcript, listening, compar
           <HighlightedArabic words={comparison.spokenWords} fontSize={20} />
         ) : transcript ? (
           <p style={{
-            margin: 0,
-            fontFamily: "Amiri, serif",
-            fontSize: 20,
-            lineHeight: 1.9,
-            color: "#374151",
-            direction: "rtl",
-            textAlign: "right",
+            margin: 0, fontFamily: T.fontArabic,
+            fontSize: 20, lineHeight: 1.9,
+            color: T.textSecondary, direction: "rtl", textAlign: "right",
           }}>
             {transcript}
           </p>
         ) : (
           <p className={listening ? "transcript-blink" : ""} style={{
-            margin: "4px 0 0",
-            fontSize: 14,
-            color: listening ? G : "#9ca3af",
+            margin: "4px 0 0", fontSize: 14,
+            color: listening ? T.green : T.textTertiary,
             fontStyle: "italic",
           }}>
             {listening ? "Listening…" : "Press the mic to begin"}

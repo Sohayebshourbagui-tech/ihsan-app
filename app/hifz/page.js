@@ -7,34 +7,13 @@ import HifzStatsCard from "../components/hifz/HifzStatsCard";
 import StatusLegend   from "../components/hifz/StatusLegend";
 import SurahSelector  from "../components/hifz/SurahSelector";
 import SurahHeader    from "../components/hifz/SurahHeader";
-import AyahGrid        from "../components/hifz/AyahGrid";
+import AyahGrid       from "../components/hifz/AyahGrid";
 import RecitationModal from "../components/recitation/RecitationModal";
 import { STATUS, TOTAL_AYAHS, SURAHS, loadProgress, saveProgress, loadAllStats } from "../../lib/storage";
 import { getSurah } from "../../lib/quran";
 import { recordRecitationResult } from "../../lib/hifzAnalytics";
-
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
-
-function GeoPattern({ id, opacity = 0.12 }) {
-  return (
-    <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity, pointerEvents:"none" }}
-         xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <pattern id={id} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-          <path d="M30 2 L58 30 L30 58 L2 30 Z" fill="none" stroke="white" strokeWidth="0.8"/>
-          <path d="M30 16 L44 30 L30 44 L16 30 Z" fill="none" stroke="white" strokeWidth="0.5"/>
-          <circle cx="30" cy="30" r="2"   fill="white"/>
-          <circle cx="0"  cy="0"  r="1.5" fill="white"/>
-          <circle cx="60" cy="0"  r="1.5" fill="white"/>
-          <circle cx="0"  cy="60" r="1.5" fill="white"/>
-          <circle cx="60" cy="60" r="1.5" fill="white"/>
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`}/>
-    </svg>
-  );
-}
+import { T } from "../../lib/theme";
+import { MicIcon, BookIcon } from "../components/icons";
 
 export default function HifzPage() {
   const [selectedSurah, setSelectedSurah] = useState(null);
@@ -42,8 +21,8 @@ export default function HifzPage() {
   const [stats,         setStats]         = useState({ memorized: 0, inProgress: 0 });
   const [mounted,       setMounted]       = useState(false);
   const [ayahTexts,     setAyahTexts]     = useState(null);
-  const [reciteAyah,       setReciteAyah]       = useState(null);
-  const [autoStartRecite,  setAutoStartRecite]  = useState(false);
+  const [reciteAyah,    setReciteAyah]    = useState(null);
+  const [autoStartRecite, setAutoStartRecite] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -77,23 +56,14 @@ export default function HifzPage() {
     const openNext = (texts) => {
       if (!texts?.[nextN - 1]) return;
       setAutoStartRecite(true);
-      setReciteAyah({
-        text:        texts[nextN - 1],
-        surahName:   surahInfo.name,
-        surahNumber,
-        ayahNumber:  nextN,
-      });
+      setReciteAyah({ text: texts[nextN - 1], surahName: surahInfo.name, surahNumber, ayahNumber: nextN });
     };
-    if (selectedSurah?.n === surahNumber && ayahTexts) {
-      openNext(ayahTexts);
-    } else {
-      getSurah(surahNumber).then(openNext);
-    }
+    if (selectedSurah?.n === surahNumber && ayahTexts) openNext(ayahTexts);
+    else getSurah(surahNumber).then(openNext);
   }
 
   function handleRecitationResult({ surah: surahN, ayah: ayahN, score, passed }) {
     recordRecitationResult({ surah: surahN, ayah: ayahN, score, passed });
-
     if (passed) {
       const surahData = SURAHS.find(s => s.n === surahN);
       if (surahData) {
@@ -108,7 +78,7 @@ export default function HifzPage() {
     }
   }
 
-  function toggleAyah(idx, text) {
+  function toggleAyah(idx) {
     setProgress(prev => {
       const next = [...prev];
       next[idx] = (next[idx] + 1) % 3;
@@ -129,106 +99,91 @@ export default function HifzPage() {
   const totalPct = Math.round((stats.memorized / TOTAL_AYAHS) * 100);
 
   return (
-    <>
-      <style>{`::-webkit-scrollbar{display:none}`}</style>
-      <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
+    <div style={{ minHeight: "100vh", background: T.bgPage, paddingBottom: 80 }}>
 
-        {/* Navbar */}
-        <nav style={{
-          background: `linear-gradient(135deg,#157a3c 0%,${G} 55%,${G2} 100%)`,
-          width: "100%", boxShadow: "0 2px 16px rgba(26,138,74,0.32)",
-          position: "relative", overflow: "hidden",
+      {/* Header */}
+      <header style={{
+        background: T.bgCard,
+        borderBottom: `1px solid ${T.border}`,
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
+        <div style={{
+          maxWidth: 680, margin: "0 auto",
+          padding: "14px 20px",
+          display: "flex", alignItems: "center", gap: 14,
         }}>
-          <GeoPattern id="hifzNav" opacity={0.13}/>
-          <div style={{
-            maxWidth: 680, margin: "0 auto", padding: "13px 20px 15px",
-            display: "flex", alignItems: "center", gap: 12, position: "relative", zIndex: 1,
-          }}>
-            <Link href="/" style={{ textDecoration: "none" }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: "50%",
-                background: "rgba(255,255,255,0.18)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 16, cursor: "pointer",
-              }}>←</div>
-            </Link>
-            <div>
-              <div style={{ color: "#fff", fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>Hifz Tracker</div>
-              <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 2 }}>Quran memorisation progress</div>
-            </div>
-            <div style={{ marginLeft: "auto", fontSize: 22 }}>📖</div>
+          <Link href="/" style={{ textDecoration: "none", color: T.textSecondary, fontSize: 20, lineHeight: 1 }}>
+            ←
+          </Link>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Hifz Tracker</div>
+            <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>Quran memorisation</div>
           </div>
-        </nav>
-
-        <div style={{ maxWidth: 680, margin: "0 auto", paddingBottom: 60 }}>
-          <HifzStatsCard mounted={mounted} stats={stats} totalPct={totalPct} />
-
-          {/* Continuous Recitation shortcut */}
-          <div style={{ margin: "12px 16px 0" }}>
-            <Link href="/recitation/continuous" style={{ textDecoration: "none" }}>
-              <div style={{
-                background: `linear-gradient(135deg,#157a3c,${G},${G2})`,
-                borderRadius: 16, padding: "16px 20px",
-                display: "flex", alignItems: "center", gap: 14,
-                boxShadow: "0 4px 16px rgba(26,138,74,0.28)",
-                cursor: "pointer",
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.2)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22, flexShrink: 0,
-                }}>🎙️</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "#fff" }}>Continuous Recitation</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.72)", marginTop: 2 }}>
-                    Recite multiple ayahs in one session
-                  </div>
-                </div>
-                <div style={{ color: "rgba(255,255,255,0.7)", fontSize: 18 }}>›</div>
-              </div>
-            </Link>
-          </div>
-
-          <StatusLegend />
-          <SurahSelector selectedSurah={selectedSurah} onSelect={selectSurah} mounted={mounted} />
-
-          {selectedSurah && (
-            <>
-              <SurahHeader
-                surah={selectedSurah}
-                progress={progress}
-                onMarkAll={() => markAll(STATUS.MEMORIZED)}
-                onReset={() => markAll(STATUS.NONE)}
-              />
-              <AyahGrid
-                progress={progress}
-                onToggle={toggleAyah}
-                ayahTexts={ayahTexts}
-                onRecite={openRecitation}
-              />
-            </>
-          )}
-
-          {!selectedSurah && (
+          <Link href="/recitation/continuous" style={{ marginLeft: "auto", textDecoration: "none" }}>
             <div style={{
-              background: "#fff", margin: "12px 16px 0", borderRadius: 16,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)", padding: "36px 20px",
-              textAlign: "center",
+              display: "flex", alignItems: "center", gap: 6,
+              background: T.greenMuted, borderRadius: T.radiusFull,
+              padding: "6px 14px",
             }}>
-              <div style={{ fontSize: 42, marginBottom: 12 }}>📖</div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#374151", marginBottom: 6 }}>
-                Select a surah to start tracking
-              </p>
-              <p style={{ fontSize: 13, color: "#9ca3af" }}>
-                Tap any surah above to view and update your memorisation progress
-              </p>
+              <MicIcon color={T.green} size={14} strokeWidth={2} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: T.green }}>Recite</span>
             </div>
-          )}
-
-          <div style={{ height: 20 }}/>
+          </Link>
         </div>
+      </header>
+
+      <div style={{ maxWidth: 680, margin: "0 auto", paddingBottom: 60 }}>
+
+        {/* Stats */}
+        <HifzStatsCard mounted={mounted} stats={stats} totalPct={totalPct} />
+
+        {/* Status legend */}
+        <StatusLegend />
+
+        {/* Surah list */}
+        <SurahSelector selectedSurah={selectedSurah} onSelect={selectSurah} mounted={mounted} />
+
+        {/* Selected surah detail */}
+        {selectedSurah && (
+          <>
+            <SurahHeader
+              surah={selectedSurah}
+              progress={progress}
+              onMarkAll={() => markAll(STATUS.MEMORIZED)}
+              onReset={() => markAll(STATUS.NONE)}
+            />
+            <AyahGrid
+              progress={progress}
+              onToggle={toggleAyah}
+              ayahTexts={ayahTexts}
+              onRecite={openRecitation}
+            />
+          </>
+        )}
+
+        {!selectedSurah && (
+          <div style={{
+            margin: "20px 20px 0",
+            background: T.bgCard,
+            borderRadius: T.radiusMd,
+            border: `1px solid ${T.border}`,
+            padding: "40px 20px",
+            textAlign: "center",
+            boxShadow: T.shadowSm,
+          }}>
+            <div style={{ marginBottom: 12 }}><BookIcon color={T.textTertiary} size={40} strokeWidth={1.4} /></div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: T.textPrimary, marginBottom: 6 }}>
+              Select a surah to track
+            </p>
+            <p style={{ fontSize: 13, color: T.textTertiary, lineHeight: 1.6 }}>
+              Tap any surah above to view and update your memorisation progress
+            </p>
+          </div>
+        )}
+
+        <div style={{ height: 20 }} />
       </div>
+
       {reciteAyah && (
         <RecitationModal
           key={`${reciteAyah.surahNumber}-${reciteAyah.ayahNumber}`}
@@ -246,7 +201,8 @@ export default function HifzPage() {
           autoStart={autoStartRecite}
         />
       )}
+
       <BottomNav />
-    </>
+    </div>
   );
 }

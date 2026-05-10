@@ -6,6 +6,7 @@ import BottomNav from "../../components/BottomNav";
 import RecitationModal from "../../components/recitation/RecitationModal";
 import { SURAHS } from "../../../lib/storage";
 import { getAyah } from "../../../lib/quran";
+import { T } from "../../../lib/theme";
 import {
   getReviewQueue,
   getWeakAyahs,
@@ -14,21 +15,18 @@ import {
   recordRecitationResult,
 } from "../../../lib/hifzAnalytics";
 
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
-
 const URGENCY_STYLE = {
-  overdue:  { border: "#dc2626", bg: "#fef2f2", label: "Overdue",    labelColor: "#dc2626" },
-  today:    { border: "#d97706", bg: "#fffbeb", label: "Due today",  labelColor: "#d97706" },
-  upcoming: { border: "#16a34a", bg: "#f0fdf4", label: "Optional",   labelColor: "#16a34a" },
+  overdue:  { color: T.red,   bg: T.redBg,   label: "Overdue"    },
+  today:    { color: T.amber, bg: T.amberBg,  label: "Due today"  },
+  upcoming: { color: T.green, bg: T.greenMuted, label: "Optional" },
 };
 
 function scoreFeedback(score) {
-  if (score >= 93) return { text: "Excellent recitation.",         color: "#15803d" };
-  if (score >= 80) return { text: "Very good — nearly there.",     color: G        };
-  if (score >= 65) return { text: "Good effort. One more time.",   color: G        };
-  if (score >= 50) return { text: "Keep practicing this ayah.",    color: "#d97706" };
-  return              { text: "Focus and try again.",              color: "#dc2626" };
+  if (score >= 93) return { text: "Excellent recitation.",         color: T.greenDark };
+  if (score >= 80) return { text: "Very good — nearly there.",     color: T.green     };
+  if (score >= 65) return { text: "Good effort. One more time.",   color: T.green     };
+  if (score >= 50) return { text: "Keep practising this ayah.",    color: T.amber     };
+  return              { text: "Focus and try again.",              color: T.red       };
 }
 
 function formatCountdown(ms) {
@@ -39,42 +37,20 @@ function formatCountdown(ms) {
   return `${m}m`;
 }
 
-function ProgressRing({ pct, size = 88, stroke = 7 }) {
+function ProgressRing({ pct, size = 80, stroke = 6 }) {
   const r    = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const dash = Math.min(pct / 100, 1) * circ;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)", display: "block" }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={T.bgSubtle} strokeWidth={stroke} />
       <circle
-        cx={size / 2} cy={size / 2} r={r}
-        fill="none" stroke={G} strokeWidth={stroke}
+        cx={size/2} cy={size/2} r={r}
+        fill="none" stroke={T.green} strokeWidth={stroke}
         strokeDasharray={`${dash} ${circ}`}
         strokeLinecap="round"
         style={{ transition: "stroke-dasharray 0.6s ease" }}
       />
-    </svg>
-  );
-}
-
-function GeoPattern({ id, opacity = 0.12 }) {
-  return (
-    <svg
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity, pointerEvents: "none" }}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <pattern id={id} x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-          <path d="M30 2 L58 30 L30 58 L2 30 Z" fill="none" stroke="white" strokeWidth="0.8" />
-          <path d="M30 16 L44 30 L30 44 L16 30 Z" fill="none" stroke="white" strokeWidth="0.5" />
-          <circle cx="30" cy="30" r="2"   fill="white" />
-          <circle cx="0"  cy="0"  r="1.5" fill="white" />
-          <circle cx="60" cy="0"  r="1.5" fill="white" />
-          <circle cx="0"  cy="60" r="1.5" fill="white" />
-          <circle cx="60" cy="60" r="1.5" fill="white" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`} />
     </svg>
   );
 }
@@ -89,6 +65,7 @@ export default function ReviewPage() {
   const [lastFeedback,   setLastFeedback]   = useState(null);
   const [mounted,        setMounted]        = useState(false);
   const [sessionDone,    setSessionDone]    = useState(false);
+  const [showWeak,       setShowWeak]       = useState(false);
 
   const refreshData = useCallback(() => {
     setQueue(getReviewQueue(50));
@@ -142,321 +119,291 @@ export default function ReviewPage() {
   }, [queue, activeItem]);
 
   return (
-    <>
-      <style>{`
-        ::-webkit-scrollbar { display: none; }
-        .review-start-btn:active { opacity: 0.8; }
-        .weak-review-btn:hover   { background: ${G} !important; color: #fff !important; }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+    <div style={{ minHeight: "100vh", background: T.bgPage, paddingBottom: 80 }}>
 
-      <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 80 }}>
-
-        {/* ── Header ── */}
-        <nav style={{
-          background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
-          position: "relative", overflow: "hidden",
-          boxShadow: "0 2px 16px rgba(26,138,74,0.32)",
+      {/* ── Header ── */}
+      <header style={{
+        background: T.bgCard,
+        borderBottom: `1px solid ${T.border}`,
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+      }}>
+        <div style={{
+          maxWidth: 680, margin: "0 auto",
+          padding: "14px 20px",
+          display: "flex", alignItems: "center", gap: 14,
         }}>
-          <GeoPattern id="reviewNav" opacity={0.13} />
-          <div style={{
-            maxWidth: 680, margin: "0 auto", padding: "13px 20px 15px",
-            display: "flex", alignItems: "center", gap: 12,
-            position: "relative", zIndex: 1,
-          }}>
-            <Link href="/hifz" style={{ textDecoration: "none" }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: "50%",
-                background: "rgba(255,255,255,0.18)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 16, cursor: "pointer",
-              }}>
-                ←
-              </div>
-            </Link>
-            <div>
-              <div style={{ color: "#fff", fontSize: 18, fontWeight: 700, lineHeight: 1.2 }}>Today's Review</div>
-              <div style={{ color: "rgba(255,255,255,0.62)", fontSize: 11, marginTop: 2 }}>Daily Hifz practice</div>
-            </div>
-            {completedToday > 0 && (
-              <div style={{
-                marginLeft: "auto",
-                background: "rgba(255,255,255,0.22)", borderRadius: 20,
-                padding: "4px 12px", color: "#fff", fontSize: 12, fontWeight: 700,
-              }}>
-                {completedToday} done ✓
-              </div>
-            )}
+          <Link href="/hifz" style={{ textDecoration: "none", color: T.textSecondary, fontSize: 20, lineHeight: 1 }}>
+            ←
+          </Link>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Today's Review</div>
           </div>
-        </nav>
-
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-
-          {/* ── Stats strip ── */}
-          {mounted && (
+          {completedToday > 0 && (
             <div style={{
-              display: "flex", gap: 10, padding: "16px 16px 0",
-              animation: "fadeInUp 0.35s ease",
+              background: T.greenMuted,
+              borderRadius: T.radiusFull,
+              padding: "4px 12px",
+              fontSize: 12, fontWeight: 700, color: T.green,
             }}>
-              {[
-                { label: "Due",      value: stats.due,                 accent: stats.due > 0 ? "#dc2626" : G },
-                { label: "Weak",     value: stats.weak,                accent: stats.weak > 0 ? "#d97706" : G },
-                { label: "Reviewed", value: `${stats.completionRate}%`, accent: G },
-              ].map(({ label, value, accent }) => (
-                <div key={label} style={{
-                  flex: 1, background: "#fff", borderRadius: 12,
-                  padding: "12px 8px", textAlign: "center",
-                  boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
-                }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: accent, lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: 10, color: "#9ca3af", marginTop: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                    {label}
-                  </div>
-                </div>
-              ))}
+              {completedToday} done ✓
             </div>
           )}
+        </div>
+      </header>
 
-          {/* ── Feedback toast ── */}
-          {lastFeedback && (
-            <div style={{
-              margin: "12px 16px 0",
-              background: "#fff", borderRadius: 12,
-              padding: "10px 16px", textAlign: "center",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
-              color: lastFeedback.color, fontWeight: 700, fontSize: 14,
-              animation: "fadeInUp 0.25s ease",
-            }}>
-              {lastFeedback.text}
-            </div>
-          )}
+      <div style={{ maxWidth: 680, margin: "0 auto" }}>
 
-          {/* ── Session completion ── */}
-          {sessionDone && queue.length === 0 && (
-            <div style={{
-              margin: "16px 16px 0",
-              background: `linear-gradient(135deg, #14532d 0%, ${G} 60%, ${G2} 100%)`,
-              borderRadius: 20,
-              padding: "32px 24px",
-              textAlign: "center",
-              position: "relative", overflow: "hidden",
-              animation: "fadeInUp 0.4s ease",
-            }}>
-              <GeoPattern id="sessionDone" opacity={0.1} />
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <div style={{ fontSize: 44, marginBottom: 12 }}>✓</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#fff", marginBottom: 8 }}>
-                  Session complete
-                </div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.75)", marginBottom: 4 }}>
-                  {completedToday} ayah{completedToday !== 1 ? "s" : ""} reviewed today
-                </div>
-                <div style={{
-                  fontSize: 13, fontFamily: "Amiri, serif",
-                  color: "rgba(255,255,255,0.65)", marginTop: 16, lineHeight: 1.8,
-                  direction: "rtl",
-                }}>
-                  إِنَّ مَعَ الْعُسْرِ يُسْرًا
-                </div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 4, fontStyle: "italic" }}>
-                  Indeed, with hardship comes ease. — 94:6
+        {/* ── Stats pills ── */}
+        {mounted && (
+          <div style={{ display: "flex", gap: 8, padding: "20px 20px 0" }}>
+            {[
+              { label: "Due",      value: stats.due,                  color: stats.due > 0 ? T.red : T.textTertiary },
+              { label: "Weak",     value: stats.weak,                 color: stats.weak > 0 ? T.amber : T.textTertiary },
+              { label: "Reviewed", value: `${stats.completionRate}%`, color: T.green },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{
+                flex: 1, background: T.bgSubtle, borderRadius: T.radiusSm,
+                padding: "10px 8px", textAlign: "center",
+              }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: 10, color: T.textTertiary, marginTop: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {label}
                 </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+        )}
 
-          {!mounted ? null : queue.length > 0 ? (
-            /* ── Review Queue ── */
-            <div style={{ padding: "16px 16px 0" }}>
-              <p style={{
-                fontSize: 11, fontWeight: 800, color: G,
-                letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12,
-              }}>
-                Review Queue
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {queue.map((item) => {
-                  const urgency  = getReviewUrgency(item);
-                  const ust      = URGENCY_STYLE[urgency];
-                  const surahInfo = SURAHS.find(s => s.n === item.surah);
-                  const key      = `${item.surah}:${item.ayah}`;
-                  return (
-                    <div key={key} style={{
-                      background: "#fff", borderRadius: 14,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                      display: "flex", overflow: "hidden",
-                      borderLeft: `4px solid ${ust.border}`,
-                      animation: "fadeInUp 0.3s ease",
-                    }}>
-                      <div style={{ flex: 1, padding: "14px 14px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>
-                            {surahInfo?.name ?? `Surah ${item.surah}`}
-                          </span>
-                          <span style={{ fontSize: 11, color: "#9ca3af" }}>Ayah {item.ayah}</span>
-                          <span style={{
-                            marginLeft: "auto",
-                            fontSize: 10, fontWeight: 700,
-                            color: ust.labelColor, background: ust.bg,
-                            padding: "2px 8px", borderRadius: 99,
-                          }}>
-                            {ust.label}
-                          </span>
-                        </div>
+        {/* ── Feedback toast ── */}
+        {lastFeedback && (
+          <div className="animate-fadeUp" style={{
+            margin: "16px 20px 0",
+            background: T.bgCard,
+            borderRadius: T.radiusSm,
+            padding: "12px 16px",
+            textAlign: "center",
+            border: `1px solid ${T.border}`,
+            color: lastFeedback.color, fontWeight: 600, fontSize: 14,
+          }}>
+            {lastFeedback.text}
+          </div>
+        )}
+
+        {/* ── Session completion ceremony ── */}
+        {sessionDone && queue.length === 0 && (
+          <div className="animate-fadeUp" style={{
+            margin: "24px 20px 0",
+            background: T.bgCard,
+            borderRadius: T.radiusLg,
+            padding: "40px 24px",
+            textAlign: "center",
+            border: `1px solid ${T.border}`,
+            boxShadow: T.shadowMd,
+          }}>
+            <div style={{ position: "relative", display: "inline-block", marginBottom: 20 }}>
+              <ProgressRing pct={100} />
+              <div style={{
+                position: "absolute", inset: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 20,
+              }}>✓</div>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: T.green, marginBottom: 8 }}>
+              Session complete
+            </div>
+            <div style={{ fontSize: 14, color: T.textSecondary, marginBottom: 24 }}>
+              {completedToday} ayah{completedToday !== 1 ? "s" : ""} reviewed today
+            </div>
+            <div style={{
+              fontFamily: T.fontArabic,
+              fontSize: 22, direction: "rtl", lineHeight: 2.0,
+              color: T.textPrimary, marginBottom: 8,
+            }}>
+              إِنَّ مَعَ الْعُسْرِ يُسْرًا
+            </div>
+            <div style={{ fontSize: 13, color: T.textTertiary, fontStyle: "italic", marginBottom: 24 }}>
+              Indeed, with hardship comes ease. — 94:6
+            </div>
+            <Link href="/" style={{ fontSize: 14, fontWeight: 600, color: T.textSecondary, textDecoration: "none" }}>
+              Return home
+            </Link>
+          </div>
+        )}
+
+        {!mounted ? null : queue.length > 0 ? (
+          /* ── Review Queue ── */
+          <div style={{ padding: "20px 20px 0" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.textTertiary, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+              Review Queue
+            </div>
+            <div style={{
+              background: T.bgCard,
+              borderRadius: T.radiusMd,
+              border: `1px solid ${T.border}`,
+              overflow: "hidden",
+              boxShadow: T.shadowSm,
+            }}>
+              {queue.map((item, idx) => {
+                const urgency   = getReviewUrgency(item);
+                const ust       = URGENCY_STYLE[urgency];
+                const surahInfo = SURAHS.find(s => s.n === item.surah);
+                const key       = `${item.surah}:${item.ayah}`;
+                return (
+                  <div key={key} style={{
+                    display: "flex", alignItems: "center",
+                    padding: "16px 20px",
+                    borderTop: idx > 0 ? `1px solid ${T.border}` : "none",
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 15, fontWeight: 700, color: T.textPrimary }}>
+                          {surahInfo?.name ?? `Surah ${item.surah}`}
+                        </span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700,
+                          color: ust.color, background: ust.bg,
+                          padding: "2px 8px", borderRadius: T.radiusFull,
+                        }}>
+                          {ust.label}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <span style={{ fontSize: 12, color: T.textTertiary }}>Ayah {item.ayah}</span>
                         {item.lastScore > 0 && (
-                          <div style={{ fontSize: 11, color: "#6b7280", marginTop: 4 }}>
-                            Last score:{" "}
-                            <span style={{
-                              fontWeight: 700,
-                              color: item.lastScore >= 90 ? G : item.lastScore >= 70 ? "#d97706" : "#dc2626",
-                            }}>
-                              {item.lastScore}%
-                            </span>
-                          </div>
+                          <span style={{
+                            fontSize: 12, fontWeight: 600,
+                            color: item.lastScore >= 90 ? T.green : item.lastScore >= 70 ? T.amber : T.red,
+                          }}>
+                            {item.lastScore}% last
+                          </span>
                         )}
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", padding: "0 14px", flexShrink: 0 }}>
-                        <button
-                          className="review-start-btn"
-                          onClick={() => startReviewItem(item)}
-                          disabled={loadingItem}
-                          style={{
-                            background: G, color: "#fff", border: "none",
-                            borderRadius: 10, padding: "9px 14px",
-                            fontSize: 12, fontWeight: 700, cursor: loadingItem ? "not-allowed" : "pointer",
-                            whiteSpace: "nowrap",
-                            opacity: loadingItem ? 0.55 : 1,
-                            transition: "opacity 0.15s",
-                            boxShadow: "0 2px 8px rgba(26,138,74,0.25)",
-                          }}
-                        >
-                          {loadingItem ? "…" : "Start →"}
-                        </button>
-                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                    <button
+                      onClick={() => startReviewItem(item)}
+                      disabled={loadingItem}
+                      style={{
+                        background: "transparent", border: "none",
+                        fontSize: 14, fontWeight: 600, color: T.green,
+                        cursor: loadingItem ? "not-allowed" : "pointer",
+                        opacity: loadingItem ? 0.5 : 1,
+                        padding: "4px 0",
+                        flexShrink: 0,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      {loadingItem ? "…" : "Recite →"}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
-          ) : (
-            /* ── Empty state ── */
-            <div style={{
-              margin: "20px 16px 0",
-              background: "#fff", borderRadius: 20,
-              boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
-              padding: "36px 24px", textAlign: "center",
-              animation: "fadeInUp 0.35s ease",
+          </div>
+        ) : (
+          /* ── Empty / clear state ── */
+          !sessionDone && (
+            <div className="animate-fadeUp" style={{
+              margin: "24px 20px 0",
+              background: T.bgCard,
+              borderRadius: T.radiusLg,
+              padding: "40px 24px",
+              textAlign: "center",
+              border: `1px solid ${T.border}`,
+              boxShadow: T.shadowSm,
             }}>
               <div style={{ position: "relative", display: "inline-block", marginBottom: 16 }}>
                 <ProgressRing pct={stats.completionRate} />
                 <div style={{
                   position: "absolute", inset: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 14, fontWeight: 800, color: G,
+                  fontSize: 13, fontWeight: 800, color: T.green,
                 }}>
                   {stats.completionRate}%
                 </div>
               </div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#111827", marginBottom: 8 }}>
-                Review queue is clear ✓
+              <div style={{ fontSize: 18, fontWeight: 700, color: T.textPrimary, marginBottom: 8 }}>
+                Review queue is clear
               </div>
-              <div style={{
-                fontSize: 13, color: "#6b7280", marginBottom: 6,
-                fontFamily: "Amiri, serif", direction: "rtl", lineHeight: 1.8,
-              }}>
+              <div style={{ fontSize: 14, color: T.textSecondary, marginBottom: 6, fontFamily: T.fontArabic, direction: "rtl", lineHeight: 1.9 }}>
                 وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا
               </div>
-              <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20, lineHeight: 1.5 }}>
+              <div style={{ fontSize: 13, color: T.textTertiary, marginBottom: 24, lineHeight: 1.6 }}>
                 {stats.nextReviewMs
                   ? `Next review in ${formatCountdown(stats.nextReviewMs)}`
                   : "Your daily review is complete. Well done."}
               </div>
               {weakAyahs.length > 0 && (
                 <button
-                  onClick={() => startReviewItem(weakAyahs[0])}
-                  disabled={loadingItem}
+                  onClick={() => setShowWeak(v => !v)}
                   style={{
-                    background: "#ecfdf3", color: G,
-                    border: `1px solid ${G}30`,
-                    borderRadius: 12, padding: "12px 24px",
-                    fontSize: 14, fontWeight: 700, cursor: "pointer",
-                    opacity: loadingItem ? 0.6 : 1,
+                    background: "transparent", border: "none",
+                    fontSize: 14, fontWeight: 600, color: T.green,
+                    cursor: "pointer", fontFamily: "inherit",
                   }}
                 >
-                  Review weak ayahs anyway
+                  {showWeak ? "Hide" : "Review weak ayahs"}
                 </button>
               )}
             </div>
-          )}
+          )
+        )}
 
-          {/* ── Weak Ayahs ── */}
-          {mounted && weakAyahs.length > 0 && (
-            <div style={{ padding: "20px 16px 0" }}>
-              <p style={{
-                fontSize: 11, fontWeight: 800, color: G,
-                letterSpacing: "0.09em", textTransform: "uppercase", marginBottom: 12,
-              }}>
-                Weak Ayahs
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {weakAyahs.map((item) => {
-                  const surahInfo = SURAHS.find(s => s.n === item.surah);
-                  const score     = item.averageScore;
-                  const isLow     = score < 50;
-                  return (
-                    <div key={`weak-${item.surah}:${item.ayah}`} style={{
-                      background: "#fff", borderRadius: 14,
-                      boxShadow: "0 1px 6px rgba(0,0,0,0.05)",
-                      padding: "12px 14px",
-                      display: "flex", alignItems: "center", gap: 12,
-                      animation: "fadeInUp 0.3s ease",
-                    }}>
-                      <div style={{
-                        width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
-                        background: isLow ? "#fef2f2" : "#fffbeb",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12, fontWeight: 800,
-                        color: isLow ? "#dc2626" : "#d97706",
-                      }}>
-                        {score}%
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>
-                          {surahInfo?.name ?? `Surah ${item.surah}`}
-                        </div>
-                        <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
-                          Ayah {item.ayah} · {item.attempts} attempt{item.attempts !== 1 ? "s" : ""}
-                        </div>
-                      </div>
-                      <button
-                        className="weak-review-btn"
-                        onClick={() => startReviewItem(item)}
-                        disabled={loadingItem}
-                        style={{
-                          background: "#ecfdf3", color: G,
-                          border: `1px solid ${G}30`,
-                          borderRadius: 10, padding: "8px 12px",
-                          fontSize: 11, fontWeight: 700,
-                          cursor: loadingItem ? "not-allowed" : "pointer",
-                          flexShrink: 0,
-                          opacity: loadingItem ? 0.6 : 1,
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        Review
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+        {/* ── Weak Ayahs ── */}
+        {mounted && weakAyahs.length > 0 && (queue.length > 0 || showWeak) && (
+          <div style={{ padding: "20px 20px 0" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: T.textTertiary, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
+              Weak Ayahs
             </div>
-          )}
+            <div style={{
+              background: T.bgCard,
+              borderRadius: T.radiusMd,
+              border: `1px solid ${T.border}`,
+              overflow: "hidden",
+              boxShadow: T.shadowSm,
+            }}>
+              {weakAyahs.map((item, idx) => {
+                const surahInfo = SURAHS.find(s => s.n === item.surah);
+                const score     = item.averageScore;
+                const scoreColor = score < 50 ? T.red : T.amber;
+                return (
+                  <div key={`weak-${item.surah}:${item.ayah}`} style={{
+                    display: "flex", alignItems: "center",
+                    padding: "14px 20px",
+                    borderTop: idx > 0 ? `1px solid ${T.border}` : "none",
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary, marginBottom: 2 }}>
+                        {surahInfo?.name ?? `Surah ${item.surah}`}
+                        <span style={{ marginLeft: 8, fontSize: 12, color: T.textTertiary }}>Ayah {item.ayah}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: T.textTertiary }}>
+                        {item.attempts} attempt{item.attempts !== 1 ? "s" : ""} ·{" "}
+                        <span style={{ fontWeight: 600, color: scoreColor }}>{score}% avg</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => startReviewItem(item)}
+                      disabled={loadingItem}
+                      style={{
+                        background: "transparent", border: "none",
+                        fontSize: 13, fontWeight: 600, color: T.green,
+                        cursor: loadingItem ? "not-allowed" : "pointer",
+                        opacity: loadingItem ? 0.5 : 1,
+                        fontFamily: "inherit",
+                      }}
+                    >
+                      Review →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-          <div style={{ height: 24 }} />
-        </div>
+        <div style={{ height: 24 }} />
       </div>
 
       {activeItem && (
@@ -475,6 +422,6 @@ export default function ReviewPage() {
       )}
 
       <BottomNav />
-    </>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import { getSurah, withBismillah, prefetchSurah } from "../../../lib/quran";
 import { compareAyah, normalizeArabic } from "../../../lib/arabic";
 import { recordRecitationResult } from "../../../lib/hifzAnalytics";
 import BottomNav from "../../components/BottomNav";
+import { MicIcon, BookIcon, CheckCircleIcon } from "../../components/icons";
 
 const G  = "#1a8a4a";
 const G2 = "#2ea55f";
@@ -240,8 +241,10 @@ function SetupScreen({ onStart }) {
         cursor: validRange ? "pointer" : "default",
         boxShadow: validRange ? "0 4px 16px rgba(26,138,74,0.3)" : "none",
         marginBottom: 20,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
       }}>
-        🎙️  Start Recitation
+        <MicIcon color={validRange ? "#fff" : "#9ca3af"} size={18} strokeWidth={2} />
+        Start Recitation
       </button>
     </div>
   );
@@ -341,7 +344,11 @@ function SummaryScreen({ results, totalSeconds, onRestart }) {
         borderRadius: 20, padding: "28px 20px", textAlign: "center",
         marginBottom: 14, boxShadow: "0 8px 24px rgba(26,138,74,0.22)",
       }}>
-        <div style={{ fontSize: 52, marginBottom: 8 }}>{great ? "✅" : "📖"}</div>
+        <div style={{ marginBottom: 8, display: "flex", justifyContent: "center" }}>
+          {great
+            ? <CheckCircleIcon color="#fff" size={52} strokeWidth={1.5} />
+            : <BookIcon color="#fff" size={52} strokeWidth={1.5} />}
+        </div>
         <div style={{ fontSize: 48, fontWeight: 900, color: "#fff", lineHeight: 1 }}>{avgScore}%</div>
         <p style={{ margin: "8px 0 0", fontSize: 14, color: "rgba(255,255,255,0.82)" }}>
           {great ? "Great session! Keep it up." : "Every recitation is progress. Keep going!"}
@@ -887,7 +894,7 @@ export default function ContinuousRecitationPage() {
                   : "Set your session"}
               </div>
             </div>
-            <div style={{ marginLeft: "auto", fontSize: 22 }}>🎙️</div>
+            <div style={{ marginLeft: "auto" }}><MicIcon color="rgba(255,255,255,0.8)" size={22} strokeWidth={1.6} /></div>
           </div>
         </nav>
 

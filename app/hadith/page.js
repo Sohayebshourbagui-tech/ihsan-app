@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import BottomNav from "../components/BottomNav";
+import { T } from "../../lib/theme";
 
-const GREEN = "#1a8a4a";
-const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.06)";
+const GREEN = T.green;
+const CARD_SHADOW = T.shadowSm;
 
 const COLLECTIONS = [
   {
@@ -231,40 +232,23 @@ export default function HadithPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa", paddingBottom: 70 }}>
-      <nav
-        style={{
-          background: "linear-gradient(135deg, #16753d 0%, #1a8a4a 55%, #2ca45f 100%)",
-          boxShadow: "0 2px 16px rgba(26,138,74,0.28)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 980,
-            margin: "0 auto",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <h1 style={{ color: "#fff", fontSize: 26, fontWeight: 700, margin: 0 }}>Hadith</h1>
-          <Link
-            href="/"
-            style={{
-              textDecoration: "none",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.45)",
-              borderRadius: 999,
-              padding: "8px 14px",
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            ← Back Home
-          </Link>
+    <div style={{ minHeight: "100vh", background: T.bgPage, paddingBottom: 70 }}>
+      <header style={{
+        background: T.bgCard,
+        borderBottom: `1px solid ${T.border}`,
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
+        <div style={{
+          maxWidth: 980, margin: "0 auto", padding: "14px 20px",
+          display: "flex", alignItems: "center", gap: 14,
+        }}>
+          <Link href="/" style={{ textDecoration: "none", color: T.textSecondary, fontSize: 20, lineHeight: 1 }}>←</Link>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Hadith</div>
+            <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>Six major collections</div>
+          </div>
         </div>
-      </nav>
+      </header>
 
       <main style={{ maxWidth: 980, margin: "0 auto", padding: "26px 20px 50px" }}>
         {/* Search bar */}
@@ -279,11 +263,12 @@ export default function HadithPage() {
               boxSizing: "border-box",
               padding: "12px 16px",
               fontSize: 15,
-              borderRadius: 12,
-              border: "1.5px solid #e5e7eb",
-              background: "#fff",
+              borderRadius: T.radiusSm,
+              border: `1px solid ${T.border}`,
+              background: T.bgInset,
+              color: T.textPrimary,
               outline: "none",
-              boxShadow: CARD_SHADOW,
+              fontFamily: "inherit",
             }}
           />
           {searchLoading && (

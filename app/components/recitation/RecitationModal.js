@@ -5,9 +5,7 @@ import MicButton      from "./MicButton";
 import TranscriptView from "./TranscriptView";
 import { compareAyah, compareRecitation } from "../../../lib/arabic";
 import { withBismillah }                  from "../../../lib/quran";
-
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
+import { T } from "../../../lib/theme";
 
 export default function RecitationModal({
   ayah, surahName, surahNumber, ayahNumber,
@@ -15,7 +13,6 @@ export default function RecitationModal({
   onNextAyah, hasNextAyah,
   autoStart = false,
 }) {
-  // Prepend Bismillah to expected text for ayah 1 of surahs 2–114 (except At-Tawbah).
   const expectedText = withBismillah(surahNumber, ayahNumber, ayah);
 
   const [listening,  setListening]  = useState(false);
@@ -29,7 +26,6 @@ export default function RecitationModal({
   const closingRef     = useRef(false);
   const comparedRef    = useRef(false);
 
-  // Live per-word feedback while the user is speaking
   const liveWords = useMemo(() => {
     if (!listening || !transcript.trim()) return null;
     const expWords = expectedText.split(/\s+/).filter(Boolean);
@@ -67,7 +63,7 @@ export default function RecitationModal({
 
     r.onerror = (event) => {
       if (event.error === "not-allowed") {
-        setError("Microphone permission denied. Please allow access and try again.");
+        setError("Microphone access denied. Please allow and try again.");
       } else if (event.error === "no-speech") {
         if (transcriptRef.current) runComparison();
         else setError("No speech detected. Try again.");
@@ -80,7 +76,6 @@ export default function RecitationModal({
     };
 
     r.onend = () => { setListening(false); runComparison(); };
-
     recognitionRef.current = r;
 
     if (autoStart) {
@@ -112,21 +107,21 @@ export default function RecitationModal({
     onClose();
   }
 
-  const hasResult   = comparison != null && !listening;
+  const hasResult    = comparison != null && !listening;
   const showNextAyah = hasResult && hasNextAyah;
 
   return (
     <>
       <style>{`
-        @keyframes sheet-up { from{transform:translateY(100%)} to{transform:translateY(0)} }
-        .recitation-sheet  { animation: sheet-up 0.28s cubic-bezier(0.32,0.72,0,1); }
+        .recitation-sheet { animation: sheetUp 0.28s cubic-bezier(0.32,0.72,0,1); }
       `}</style>
 
       {/* Backdrop */}
       <div onClick={handleClose} style={{
-        position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-        zIndex: 1000, backdropFilter: "blur(2px)",
-      }}/>
+        position: "fixed", inset: 0,
+        background: "rgba(28,25,23,0.45)",
+        zIndex: 1000, backdropFilter: "blur(3px)",
+      }} />
 
       {/* Bottom sheet */}
       <div className="recitation-sheet" style={{
@@ -134,28 +129,36 @@ export default function RecitationModal({
         zIndex: 1001, display: "flex", justifyContent: "center",
       }}>
         <div style={{
-          width: "100%", maxWidth: 680, background: "#fff",
-          borderRadius: "24px 24px 0 0", padding: "12px 20px 36px",
-          boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
-          maxHeight: "85vh", overflowY: "auto",
+          width: "100%", maxWidth: 680,
+          background: T.bgPage,
+          borderRadius: "22px 22px 0 0",
+          padding: "12px 20px 40px",
+          boxShadow: `0 -8px 40px rgba(28,25,23,0.16)`,
+          maxHeight: "88vh", overflowY: "auto",
         }}>
-          {/* Handle */}
-          <div style={{ width: 36, height: 4, background: "#e5e7eb", borderRadius: 99, margin: "0 auto 16px" }}/>
+          {/* Drag handle */}
+          <div style={{
+            width: 36, height: 4,
+            background: T.borderStrong,
+            borderRadius: T.radiusFull,
+            margin: "0 auto 18px",
+          }} />
 
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
             <div>
-              <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: G, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Recitation
-              </p>
-              <h3 style={{ margin: "3px 0 0", fontSize: 17, fontWeight: 800, color: "#111827" }}>
-                {surahName} · Ayah {ayahNumber}
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: T.textPrimary }}>
+                {surahName}
               </h3>
+              <p style={{ margin: "3px 0 0", fontSize: 13, color: T.textTertiary }}>
+                Ayah {ayahNumber}
+              </p>
             </div>
             <button onClick={handleClose} style={{
-              width: 32, height: 32, borderRadius: "50%", background: "#f3f4f6",
-              border: "none", display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", fontSize: 16, color: "#6b7280", flexShrink: 0,
+              width: 32, height: 32, borderRadius: "50%",
+              background: T.bgSubtle, border: "none",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 14, color: T.textSecondary, flexShrink: 0,
             }}>✕</button>
           </div>
 
@@ -168,27 +171,30 @@ export default function RecitationModal({
           />
 
           {error && (
-            <div style={{ marginTop: 10, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, padding: "10px 14px" }}>
-              <p style={{ margin: 0, fontSize: 13, color: "#dc2626" }}>{error}</p>
+            <div style={{
+              marginTop: 12,
+              background: T.redBg, border: `1px solid rgba(192,57,43,0.2)`,
+              borderRadius: T.radiusSm, padding: "10px 14px",
+            }}>
+              <p style={{ margin: 0, fontSize: 13, color: T.red }}>{error}</p>
             </div>
           )}
 
           {/* Controls */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginTop: 24 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 28 }}>
             <MicButton listening={listening} disabled={!supported} onClick={toggleListening} />
-            <p style={{ margin: 0, fontSize: 12, color: listening ? "#dc2626" : "#9ca3af", fontWeight: 600 }}>
-              {listening ? "Tap to stop" : comparison ? "Tap to recite again" : "Tap to recite"}
+            <p style={{ margin: 0, fontSize: 12, color: listening ? T.red : T.textTertiary, fontWeight: 600 }}>
+              {listening ? "Tap to stop" : comparison ? "Tap to recite again" : "Tap to begin"}
             </p>
 
-            {/* Next Ayah — prominent green button shown first */}
             {showNextAyah && (
               <button onClick={onNextAyah} style={{
-                marginTop: 4, padding: "13px 36px",
-                background: `linear-gradient(135deg,${G},${G2})`,
-                border: "none", borderRadius: 12, fontSize: 15, fontWeight: 800,
-                color: "#fff", cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(26,138,74,0.35)",
-                width: "100%",
+                marginTop: 4, padding: "14px",
+                background: T.green,
+                border: "none", borderRadius: T.radiusMd,
+                fontSize: 15, fontWeight: 700,
+                color: T.textInverse, cursor: "pointer",
+                width: "100%", fontFamily: "inherit",
               }}>
                 Next Ayah →
               </button>
@@ -196,10 +202,14 @@ export default function RecitationModal({
 
             {hasResult && (
               <button onClick={toggleListening} style={{
-                padding: "9px 24px", background: "#f9fafb",
-                border: "1.5px solid #e5e7eb", borderRadius: 10,
-                fontSize: 13, fontWeight: 700, color: "#374151", cursor: "pointer",
-                width: showNextAyah ? "100%" : "auto",
+                padding: "11px",
+                background: "transparent",
+                border: "none",
+                fontSize: 14, fontWeight: 600,
+                color: T.green,
+                cursor: "pointer",
+                width: "100%",
+                fontFamily: "inherit",
               }}>
                 Try Again
               </button>

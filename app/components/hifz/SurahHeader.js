@@ -1,10 +1,7 @@
 "use client";
 
 import { STATUS } from "../../../lib/storage";
-
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
-const CARD_SHADOW = "0 2px 8px rgba(0,0,0,0.06)";
+import { T } from "../../../lib/theme";
 
 export default function SurahHeader({ surah, progress, onMarkAll, onReset }) {
   const surahMemorized  = progress.filter(v => v === STATUS.MEMORIZED).length;
@@ -12,57 +9,67 @@ export default function SurahHeader({ surah, progress, onMarkAll, onReset }) {
   const surahPct = Math.round((surahMemorized / surah.a) * 100);
 
   return (
-    <div style={{
-      background: "#fff", margin: "12px 16px 0", borderRadius: 16,
-      boxShadow: CARD_SHADOW, padding: "18px 16px",
-      borderLeft: `4px solid ${G}`,
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <div>
-          <h3 style={{ margin: "0 0 2px", fontSize: 18, fontWeight: 800, color: "#111827" }}>
-            {surah.name}
-          </h3>
-          <p style={{
-            margin: "0 0 4px", fontFamily: "Amiri,serif", fontSize: 20,
-            color: "#374151", direction: "rtl",
-          }}>{surah.ar}</p>
-          <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+    <div style={{ padding: "20px 20px 0" }}>
+      <div style={{
+        background: T.bgCard,
+        borderRadius: T.radiusMd,
+        border: `1px solid ${T.border}`,
+        padding: "20px",
+        boxShadow: T.shadowSm,
+      }}>
+        {/* Surah name */}
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontFamily: T.fontArabic, fontSize: 36, color: T.textPrimary, lineHeight: 1.4, marginBottom: 4 }}>
+            {surah.ar}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.textPrimary }}>{surah.name}</div>
+          <div style={{ fontSize: 12, color: T.textTertiary, marginTop: 3 }}>
             Surah {surah.n} · {surah.a} ayahs
-          </p>
+          </div>
         </div>
-        <div style={{ textAlign: "right" }}>
-          <p style={{ margin: 0, fontSize: 28, fontWeight: 900, color: G }}>{surahPct}%</p>
-          <p style={{ margin: 0, fontSize: 11, color: "#9ca3af" }}>memorised</p>
+
+        {/* Progress */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: T.textSecondary }}>Memorised</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: T.green }}>{surahPct}%</span>
+          </div>
+          <div style={{ height: 6, background: T.bgSubtle, borderRadius: T.radiusFull, overflow: "hidden" }}>
+            <div style={{
+              height: "100%", borderRadius: T.radiusFull,
+              background: T.green,
+              width: `${surahPct}%`, transition: "width 0.35s ease",
+            }} />
+          </div>
         </div>
-      </div>
 
-      <div style={{ height: 8, background: "#f3f4f6", borderRadius: 999, overflow: "hidden", marginBottom: 10 }}>
-        <div style={{
-          height: "100%", borderRadius: 999,
-          background: `linear-gradient(90deg,${G},${G2})`,
-          width: `${surahPct}%`, transition: "width 0.3s ease",
-        }}/>
-      </div>
+        {/* Stats line */}
+        <div style={{ display: "flex", gap: 16, fontSize: 12, marginBottom: 16 }}>
+          <span style={{ color: T.green, fontWeight: 600 }}>✓ {surahMemorized} memorised</span>
+          {surahInProgress > 0 && (
+            <span style={{ color: T.amber, fontWeight: 600 }}>◑ {surahInProgress} in progress</span>
+          )}
+          <span style={{ color: T.textTertiary }}>{surah.a - surahMemorized - surahInProgress} not started</span>
+        </div>
 
-      <div style={{ display: "flex", gap: 8, fontSize: 12, color: "#6b7280", marginBottom: 14 }}>
-        <span style={{ color: "#15803d", fontWeight: 700 }}>✓ {surahMemorized} memorised</span>
-        {surahInProgress > 0 && (
-          <span style={{ color: "#b45309", fontWeight: 700 }}>⟳ {surahInProgress} in progress</span>
-        )}
-        <span>{surah.a - surahMemorized - surahInProgress} not started</span>
-      </div>
-
-      <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={onMarkAll} style={{
-          flex: 1, border: `1px solid ${G}`, background: "#ecfdf3",
-          color: G, borderRadius: 8, padding: "8px",
-          fontSize: 12, fontWeight: 700, cursor: "pointer",
-        }}>Mark All Memorised</button>
-        <button onClick={onReset} style={{
-          flex: 1, border: "1px solid #e5e7eb", background: "#f9fafb",
-          color: "#6b7280", borderRadius: 8, padding: "8px",
-          fontSize: 12, fontWeight: 700, cursor: "pointer",
-        }}>Reset</button>
+        {/* Actions */}
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onMarkAll} style={{
+            flex: 1, border: "none", background: T.greenMuted,
+            color: T.green, borderRadius: T.radiusSm, padding: "9px",
+            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+          }}>
+            Mark All Memorised
+          </button>
+          <button onClick={onReset} style={{
+            background: "transparent", border: "none",
+            color: T.textTertiary, borderRadius: T.radiusSm,
+            padding: "9px 14px", fontSize: 13, fontWeight: 600,
+            cursor: "pointer", fontFamily: "inherit",
+          }}>
+            Reset
+          </button>
+        </div>
       </div>
     </div>
   );

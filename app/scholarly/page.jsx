@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import BottomNav from "../components/BottomNav";
+import { T } from "../../lib/theme";
+import { BookIcon, InfoIcon } from "../components/icons";
 
-const G  = "#1a8a4a";
-const G2 = "#2ea55f";
+const G  = T.green;
+const G2 = T.greenLight;
 
 // ─── Suggested Questions ──────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
@@ -189,8 +191,9 @@ function MessageBubble({ message, isStreaming }) {
 
         {!isUser && expanded && message.citations?.length > 0 && (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px dashed #bbf7d0`, animation: "fadeIn 0.2s ease" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: G, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>
-              📖 Sources & References
+            <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, color: G, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>
+              <BookIcon color={G} size={14} strokeWidth={2} />
+              Sources & References
             </div>
             {message.citations.map((c, i) => (
               <CitationCard key={i} citation={c} />
@@ -257,7 +260,6 @@ function WelcomeScreen({ onSuggest }) {
               e.currentTarget.style.boxShadow = "none";
             }}
           >
-            <span style={{ fontSize: 14, flexShrink: 0 }}>🌙</span>
             <span>{q}</span>
           </button>
         ))}
@@ -269,7 +271,7 @@ function WelcomeScreen({ onSuggest }) {
         borderRadius: 10, padding: "10px 14px",
         fontSize: 12, color: "#166534", maxWidth: 460, textAlign: "left", lineHeight: 1.5,
       }}>
-        <span style={{ fontSize: 14, flexShrink: 0 }}>ℹ️</span>
+        <InfoIcon color="#166534" size={16} />
         <span>Scholarly only answers from hadith sources. Questions outside this scope will be gently redirected.</span>
       </div>
     </div>
@@ -371,71 +373,43 @@ export default function ScholarlyPage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", fontFamily: "inherit", paddingBottom: 58 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: T.bgPage, fontFamily: "inherit", paddingBottom: 58 }}>
       <style>{`
         @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         .input-wrap { transition: border-color 0.2s, box-shadow 0.2s; }
-        .send-btn:hover:not(:disabled) { background: #157a3c !important; }
-        .clear-btn:hover { background: rgba(255,255,255,0.25) !important; }
+        .send-btn:hover:not(:disabled) { background: ${T.greenDark} !important; }
       `}</style>
 
-      {/* ── Green gradient header ── */}
-      <div style={{
+      {/* ── Clean header ── */}
+      <header style={{
         flexShrink: 0,
-        background: `linear-gradient(135deg, #157a3c 0%, ${G} 55%, ${G2} 100%)`,
-        boxShadow: "0 2px 16px rgba(26,138,74,0.32)",
-        position: "relative",
-        overflow: "hidden",
+        background: T.bgCard,
+        borderBottom: `1px solid ${T.border}`,
       }}>
-        <GeoPattern id="geoScholarlyHeader" opacity={0.11} />
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "13px 22px 15px",
-          position: "relative", zIndex: 1,
+          padding: "13px 20px",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 13 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.28)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 20,
-            }}>📚</div>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", lineHeight: 1.2 }}>
-                Scholarly.AI
-              </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 2 }}>
-                Hadith-based Islamic Knowledge
-              </div>
-            </div>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Scholarly.AI</div>
+            <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>Hadith-based Islamic Knowledge</div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.28)",
-              color: "#fff", fontSize: 11, fontWeight: 600,
-              padding: "5px 11px", borderRadius: 20,
-            }}>📖 10 Collections</div>
             {messages.length > 0 && (
-              <button onClick={clearChat} className="clear-btn" style={{
-                display: "flex", alignItems: "center", gap: 5,
-                background: "rgba(255,255,255,0.12)",
-                border: "1px solid rgba(255,255,255,0.25)",
-                color: "rgba(255,255,255,0.9)", fontSize: 12, padding: "5px 13px",
-                borderRadius: 20, cursor: "pointer", fontFamily: "inherit",
-              }}>🗑️ New Chat</button>
+              <button onClick={clearChat} style={{
+                background: "transparent", border: `1px solid ${T.border}`,
+                color: T.textSecondary, fontSize: 12, padding: "5px 12px",
+                borderRadius: T.radiusFull, cursor: "pointer", fontFamily: "inherit",
+              }}>New Chat</button>
             )}
-            <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 22, marginLeft: 4 }}>☽</span>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* ── Chat area ── */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: "#fff" }}>
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: T.bgPage }}>
         {messages.length === 0 ? (
           <WelcomeScreen onSuggest={sendMessage} />
         ) : (
@@ -451,17 +425,16 @@ export default function ScholarlyPage() {
       {/* ── Input bar ── */}
       <div style={{
         flexShrink: 0, padding: "12px 20px 10px",
-        background: "#fff", borderTop: "1px solid #ececec",
-        boxShadow: "0 -2px 12px rgba(0,0,0,0.04)",
+        background: T.bgCard, borderTop: `1px solid ${T.border}`,
       }}>
         <div
           className="input-wrap"
           style={{
             display: "flex", gap: 10, alignItems: "flex-end",
             maxWidth: 700, margin: "0 auto",
-            background: "#fff",
-            border: `1px solid ${inputFocused ? G : "#e0e0e0"}`,
-            borderRadius: 14, padding: "0 10px 0 0",
+            background: T.bgInset,
+            border: `1.5px solid ${inputFocused ? G : T.border}`,
+            borderRadius: T.radiusMd, padding: "0 10px 0 0",
             boxShadow: inputFocused ? `0 0 0 3px rgba(26,138,74,0.08)` : "none",
           }}
         >
@@ -517,7 +490,7 @@ export default function ScholarlyPage() {
             )}
           </button>
         </div>
-        <p style={{ textAlign: "center", fontSize: 11, color: "#a0aec0", margin: "7px auto 0", maxWidth: 700 }}>
+        <p style={{ textAlign: "center", fontSize: 11, color: T.textTertiary, margin: "7px auto 0", maxWidth: 700 }}>
           Scholarly answers exclusively from authenticated hadith. Always consult a qualified scholar for personal matters.
         </p>
       </div>

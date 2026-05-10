@@ -43,6 +43,10 @@ next-env.d.ts
 # large static assets (SVG Mushaf pages — copy manually)
 /public/mushaf-pages/
 
+# large data files (copy manually from Downloads)
+/data/tafsir-ibn-kathir.json
+/data/surah-info.json
+
 # claude internals
 .claude/
 

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import BottomNav from "../components/BottomNav";
 import { T } from "../../lib/theme";
 import { BookIcon, InfoIcon } from "../components/icons";
+import { getAyah } from "../../lib/quran";
 
 // ─── Scholarly.AI Premium Colors ─────────────────────────────────────────────
 const SC = {
@@ -25,9 +26,9 @@ const SC = {
 const SUGGESTED_QUESTIONS = [
   "What did the Prophet ﷺ say about the importance of prayer?",
   "Are there hadiths about treating parents with kindness?",
-  "What is the hadith about smiling being a form of charity?",
+  "What is the tafsir of Ayat al-Kursi (2:255)?",
   "What did the Prophet ﷺ say about seeking knowledge?",
-  "Are there hadiths about the virtues of Ramadan?",
+  "Tell me about Surah Al-Kahf — its themes and context.",
   "What hadiths guide us on caring for neighbors?",
 ];
 
@@ -97,6 +98,80 @@ function CitationCard({ citation }) {
         }}>
           {grade.label}
         </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Quran Verse Card ─────────────────────────────────────────────────────
+function QuranVerseCard({ verse }) {
+  const [arabicText,  setArabicText]  = useState(null);
+  const [translation, setTranslation] = useState(null);
+  const [loading,     setLoading]     = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchVerse() {
+      setLoading(true);
+      try {
+        const [arabic, transRes] = await Promise.all([
+          getAyah(verse.surah, verse.ayah),
+          fetch(`/api/quran/verse?surah=${verse.surah}&ayah=${verse.ayah}`),
+        ]);
+        if (cancelled) return;
+        setArabicText(arabic);
+        if (transRes.ok) {
+          const data = await transRes.json();
+          if (!cancelled) setTranslation(data.translation ?? null);
+        }
+      } catch {
+        // leave nulls — handled in render
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchVerse();
+    return () => { cancelled = true; };
+  }, [verse.surah, verse.ayah]);
+
+  return (
+    <div style={{
+      display: "flex", gap: 12,
+      background: SC.ivory,
+      border: `1px solid ${SC.borderSubtle}`, borderLeft: `3px solid ${SC.emerald}`,
+      borderRadius: 8, padding: "14px 14px 14px 16px", marginTop: 8,
+      boxShadow: SC.shadowSoft,
+    }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 700, fontSize: 14, color: SC.emerald }}>{verse.surah_name}</span>
+          <span style={{ fontFamily: "Amiri Quran, serif", fontSize: 13, color: SC.textWarm, direction: "rtl" }}>{verse.surah_name_arabic}</span>
+          <span style={{ fontSize: 12, color: SC.textWarm, marginLeft: "auto" }}>Ayah {verse.ayah}</span>
+        </div>
+
+        {loading ? (
+          <div style={{ fontSize: 13, color: SC.textLight, fontStyle: "italic", padding: "6px 0" }}>Loading verse…</div>
+        ) : (
+          <>
+            {arabicText && (
+              <div style={{
+                fontFamily: "Amiri Quran, serif", fontSize: 20,
+                direction: "rtl", textAlign: "right",
+                lineHeight: 2, color: SC.textDark, marginBottom: 8,
+              }}>
+                {arabicText}
+              </div>
+            )}
+            {translation && (
+              <div style={{ fontSize: 13, color: SC.textWarm, fontStyle: "italic", lineHeight: 1.6 }}>
+                "{translation}"
+              </div>
+            )}
+            {!arabicText && !translation && (
+              <div style={{ fontSize: 13, color: SC.textLight, fontStyle: "italic" }}>Verse text unavailable.</div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -196,15 +271,30 @@ function MessageBubble({ message, isStreaming }) {
           </button>
         )}
 
-        {!isUser && expanded && message.citations?.length > 0 && (
+        {!isUser && expanded && (message.citations?.length > 0 || message.quranVerses?.length > 0) && (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${SC.borderSubtle}`, animation: "fadeIn 0.2s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: SC.forestGreen, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>
-              <BookIcon color={SC.forestGreen} size={14} strokeWidth={2} />
-              Sources & References
-            </div>
-            {message.citations.map((c, i) => (
-              <CitationCard key={i} citation={c} />
-            ))}
+            {message.citations?.length > 0 && (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: SC.forestGreen, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>
+                  <BookIcon color={SC.forestGreen} size={14} strokeWidth={2} />
+                  Sources & References
+                </div>
+                {message.citations.map((c, i) => (
+                  <CitationCard key={i} citation={c} />
+                ))}
+              </>
+            )}
+            {message.quranVerses?.length > 0 && (
+              <div style={{ marginTop: message.citations?.length > 0 ? 14 : 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: SC.emerald, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>
+                  <BookIcon color={SC.emerald} size={14} strokeWidth={2} />
+                  Quranic References
+                </div>
+                {message.quranVerses.map((v, i) => (
+                  <QuranVerseCard key={i} verse={v} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -282,7 +372,7 @@ function WelcomeScreen({ onSuggest }) {
         fontSize: 13, color: SC.textWarm, maxWidth: 480, textAlign: "left", lineHeight: 1.6,
       }}>
         <InfoIcon color={SC.forestGreen} size={16} />
-        <span>Scholarly only answers from authenticated hadith sources. For personal matters, always consult a qualified Islamic scholar.</span>
+        <span>Scholarly answers from authenticated hadith sources, Ibn Kathir's Tafsir, and Quranic scholarship. For personal matters, always consult a qualified Islamic scholar.</span>
       </div>
     </div>
   );
@@ -313,7 +403,7 @@ export default function ScholarlyPage() {
     setMessages(updatedMsgs);
 
     const assistantIdx = updatedMsgs.length;
-    setMessages(prev => [...prev, { role: "assistant", content: "", summary: "", detail: "", citations: [] }]);
+    setMessages(prev => [...prev, { role: "assistant", content: "", summary: "", detail: "", citations: [], quranVerses: [] }]);
     setStreamingIdx(assistantIdx);
 
     try {
@@ -333,7 +423,7 @@ export default function ScholarlyPage() {
         const snap = accumulated;
         setMessages(prev => {
           const updated = [...prev];
-          updated[assistantIdx] = { role: "assistant", content: snap, summary: "", detail: "", citations: [] };
+          updated[assistantIdx] = { role: "assistant", content: snap, summary: "", detail: "", citations: [], quranVerses: [] };
           return updated;
         });
         await new Promise(r => setTimeout(r, 18 + Math.random() * 16));
@@ -343,11 +433,12 @@ export default function ScholarlyPage() {
       setMessages(prev => {
         const updated = [...prev];
         updated[assistantIdx] = {
-          role:      "assistant",
-          content:   data.summary || data.detail || "",
-          summary:   data.summary || "",
-          detail:    data.detail  || "",
-          citations: data.citations ?? [],
+          role:        "assistant",
+          content:     data.summary || data.detail || "",
+          summary:     data.summary || "",
+          detail:      data.detail  || "",
+          citations:   data.citations   ?? [],
+          quranVerses: data.quranVerses ?? [],
         };
         return updated;
       });
@@ -356,7 +447,7 @@ export default function ScholarlyPage() {
         const updated = [...prev];
         updated[assistantIdx] = {
           role: "assistant", content: "I'm sorry, I'm unable to answer right now. Please try again in a moment.",
-          summary: "", detail: "", citations: [],
+          summary: "", detail: "", citations: [], quranVerses: [],
         };
         return updated;
       });
@@ -403,7 +494,7 @@ export default function ScholarlyPage() {
         }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, color: SC.forestGreen }}>Scholarly.AI</div>
-            <div style={{ fontSize: 11, color: SC.textLight, marginTop: 2 }}>Hadith-based guidance</div>
+            <div style={{ fontSize: 11, color: SC.textLight, marginTop: 2 }}>Hadith · Tafsir · Quran</div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

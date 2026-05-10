@@ -5,8 +5,21 @@ import BottomNav from "../components/BottomNav";
 import { T } from "../../lib/theme";
 import { BookIcon, InfoIcon } from "../components/icons";
 
-const G  = T.green;
-const G2 = T.greenLight;
+// ─── Scholarly.AI Premium Colors ─────────────────────────────────────────────
+const SC = {
+  parchment:      "#f8f5ef",
+  forestGreen:    "#163c2f",
+  emerald:        "#1f6b4f",
+  softGold:       "#c8a96b",
+  cream:          "#fffaf5",
+  ivory:          "#fdf9f3",
+  textDark:       "#2a2420",
+  textWarm:       "#6b6562",
+  textLight:      "#a89f98",
+  borderSubtle:   "#e8e0d6",
+  shadowSoft:     "0 1px 3px rgba(42,36,32,0.04), 0 2px 8px rgba(42,36,32,0.06)",
+  shadowMedium:   "0 2px 6px rgba(42,36,32,0.06), 0 4px 12px rgba(42,36,32,0.08)",
+};
 
 // ─── Suggested Questions ──────────────────────────────────────────────────────
 const SUGGESTED_QUESTIONS = [
@@ -20,9 +33,9 @@ const SUGGESTED_QUESTIONS = [
 
 
 const GRADE_COLORS = {
-  Sahih: { bg: "#d1fae5", text: "#065f46", label: "Sahih · صحيح" },
-  Hasan: { bg: "#fef9c3", text: "#713f12", label: "Hasan · حسن" },
-  Daif:  { bg: "#fee2e2", text: "#991b1b", label: "Da'if · ضعيف" },
+  Sahih: { bg: `rgba(200,169,107,0.1)`, text: SC.softGold, label: "Sahih · صحيح" },
+  Hasan: { bg: `rgba(31,107,79,0.1)`, text: SC.emerald, label: "Hasan · حسن" },
+  Daif:  { bg: `rgba(107,101,98,0.1)`, text: SC.textWarm, label: "Da'if · ضعيف" },
 };
 
 function GeoPattern({ id, opacity = 0.12 }) {
@@ -53,40 +66,33 @@ function CitationCard({ citation }) {
   return (
     <div style={{
       display: "flex", gap: 12,
-      background: "#f0faf4",
-      border: "1px solid #bbf7d0", borderLeft: `3px solid ${G}`,
-      borderRadius: 10, padding: "12px 14px", marginTop: 8,
+      background: SC.ivory,
+      border: `1px solid ${SC.borderSubtle}`, borderLeft: `3px solid ${SC.softGold}`,
+      borderRadius: 8, padding: "14px 14px 14px 16px", marginTop: 8,
+      boxShadow: SC.shadowSoft,
     }}>
-      <div style={{
-        flexShrink: 0, width: 26, height: 26,
-        background: G, color: "white", borderRadius: "50%",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 11, fontWeight: 700, marginTop: 2,
-      }}>
-        {citation.id}
-      </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 3, flexWrap: "wrap" }}>
-          <span style={{ fontWeight: 700, fontSize: 13, color: "#1a202c" }}>{citation.collection}</span>
-          <span style={{ fontFamily: "serif", fontSize: 13, color: "#4a5568", direction: "rtl" }}>{citation.arabic_name}</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: SC.forestGreen }}>{citation.collection}</span>
+          <span style={{ fontFamily: "Amiri Quran, serif", fontSize: 13, color: SC.textWarm, direction: "rtl" }}>{citation.arabic_name}</span>
         </div>
-        <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#718096", marginBottom: 3, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 10, fontSize: 12, color: SC.textWarm, marginBottom: 3, flexWrap: "wrap" }}>
           {citation.book && <span style={{ fontStyle: "italic" }}>{citation.book} (Book {citation.book_number})</span>}
-          <span style={{ fontWeight: 600, color: G }}>Hadith #{citation.hadith_number}</span>
+          <span style={{ fontWeight: 600, color: SC.forestGreen }}>Hadith #{citation.hadith_number}</span>
         </div>
         {citation.narrator && (
-          <div style={{ fontSize: 12, color: "#4a5568", marginBottom: 5 }}>
+          <div style={{ fontSize: 12, color: SC.textWarm, marginBottom: 5 }}>
             Narrated by <strong>{citation.narrator}</strong>
           </div>
         )}
         {citation.preview && (
-          <div style={{ fontSize: 12, color: "#2d3748", fontStyle: "italic", marginBottom: 7, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: SC.textDark, fontStyle: "italic", marginBottom: 7, lineHeight: 1.5 }}>
             "{citation.preview}..."
           </div>
         )}
         <span style={{
           display: "inline-block", fontSize: 11, fontWeight: 600,
-          padding: "2px 10px", borderRadius: 20,
+          padding: "3px 12px", borderRadius: 20,
           background: grade.bg, color: grade.text,
         }}>
           {grade.label}
@@ -105,7 +111,7 @@ function MessageBubble({ message, isStreaming }) {
     (text || "").split(/\n\n+/).map((para, i) => {
       const withSup = para.replace(
         /\[(\d+)\]/g,
-        `<sup style="font-size:11px;color:${G};background:#d1fae5;padding:0 3px;border-radius:3px;font-weight:700">[$1]</sup>`
+        `<sup style="font-size:11px;color:${SC.softGold};background:rgba(200,169,107,0.1);padding:0 3px;border-radius:3px;font-weight:700">[$1]</sup>`
       );
       const withBold = withSup.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
       const isArabic = /[؀-ۿ]/.test(para);
@@ -114,8 +120,8 @@ function MessageBubble({ message, isStreaming }) {
           key={i}
           style={{
             margin: "0 0 10px", lineHeight: 1.8,
-            fontFamily: isArabic ? "serif" : "inherit",
-            fontSize: isArabic ? 20 : "inherit",
+            fontFamily: isArabic ? "Amiri Quran, serif" : "inherit",
+            fontSize: isArabic ? 18 : "inherit",
             direction: isArabic ? "rtl" : "ltr",
             textAlign: isArabic ? "right" : "left",
           }}
@@ -144,24 +150,25 @@ function MessageBubble({ message, isStreaming }) {
         flexShrink: 0, width: 36, height: 36, borderRadius: "50%",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 17, marginTop: 4,
-        background: isUser ? "#f0fdf4" : `linear-gradient(135deg,${G},#0d6035)`,
-        border: isUser ? `2px solid ${G}` : "none",
-        boxShadow: isUser ? "none" : "0 2px 8px rgba(26,138,74,0.25)",
+        background: isUser ? SC.cream : SC.ivory,
+        border: isUser ? `2px solid ${SC.forestGreen}` : `1px solid ${SC.borderSubtle}`,
+        boxShadow: isUser ? SC.shadowSoft : "none",
       }}>
         {isUser ? "🧕" : "📚"}
       </div>
 
       <div style={{
         maxWidth: "min(580px, 80%)",
-        borderRadius: 16,
+        borderRadius: 12,
         padding: "14px 18px",
-        fontSize: 14,
-        background: isUser ? G : "#ffffff",
-        color: isUser ? "#fff" : "#1a202c",
-        border: isUser ? "none" : `1px solid #d1fae5`,
-        boxShadow: isUser ? `0 2px 12px rgba(26,138,74,0.2)` : "0 2px 12px rgba(0,0,0,0.04)",
-        borderBottomRightRadius: isUser ? 4 : 16,
-        borderBottomLeftRadius: isUser ? 16 : 4,
+        fontSize: 15,
+        lineHeight: 1.7,
+        background: isUser ? SC.forestGreen : SC.cream,
+        color: isUser ? "#fff" : SC.textDark,
+        border: isUser ? "none" : `1px solid ${SC.borderSubtle}`,
+        boxShadow: SC.shadowSoft,
+        borderBottomRightRadius: isUser ? 4 : 12,
+        borderBottomLeftRadius: isUser ? 12 : 4,
       }}>
         <div style={expanded ? { animation: "fadeIn 0.2s ease" } : {}}>
           {formatText(displayText)}
@@ -170,7 +177,7 @@ function MessageBubble({ message, isStreaming }) {
         {isStreaming && (
           <span style={{
             display: "inline-block", width: 2, height: "1em",
-            background: G, marginLeft: 3, verticalAlign: "text-bottom",
+            background: SC.forestGreen, marginLeft: 3, verticalAlign: "text-bottom",
             animation: "blink 0.8s infinite",
           }} />
         )}
@@ -181,7 +188,7 @@ function MessageBubble({ message, isStreaming }) {
             style={{
               display: "block", marginTop: 10,
               background: "none", border: "none", padding: 0,
-              fontSize: 13, fontWeight: 700, color: G,
+              fontSize: 13, fontWeight: 700, color: SC.forestGreen,
               cursor: "pointer", fontFamily: "inherit",
             }}
           >
@@ -190,9 +197,9 @@ function MessageBubble({ message, isStreaming }) {
         )}
 
         {!isUser && expanded && message.citations?.length > 0 && (
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px dashed #bbf7d0`, animation: "fadeIn 0.2s ease" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, color: G, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 8 }}>
-              <BookIcon color={G} size={14} strokeWidth={2} />
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${SC.borderSubtle}`, animation: "fadeIn 0.2s ease" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 700, color: SC.forestGreen, textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>
+              <BookIcon color={SC.forestGreen} size={14} strokeWidth={2} />
               Sources & References
             </div>
             {message.citations.map((c, i) => (
@@ -211,53 +218,56 @@ function WelcomeScreen({ onSuggest }) {
     <div style={{
       flex: 1, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      padding: "32px 20px", textAlign: "center",
+      padding: "40px 20px", textAlign: "center",
     }}>
-      <div style={{
-        width: 72, height: 72, borderRadius: "50%",
-        background: `linear-gradient(135deg,${G},#0d6035)`,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 32, marginBottom: 20,
-        boxShadow: "0 8px 28px rgba(26,138,74,0.25)",
-      }}>📚</div>
+      {/* Logo */}
+      <svg width={48} height={48} viewBox="0 0 48 48" fill="none" style={{ marginBottom: 28 }}>
+        <circle cx="24" cy="24" r="22" stroke={SC.softGold} strokeWidth={2} />
+        <circle cx="24" cy="24" r="20" fill={SC.forestGreen} opacity={0.05} />
+        <text x="24" y="32" textAnchor="middle" fontFamily="Amiri Quran" fontSize="28" fill={SC.softGold} fontWeight="700">
+          ع
+        </text>
+      </svg>
 
-      <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 8px" }}>Scholarly.AI</h2>
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: SC.forestGreen, margin: "0 0 10px" }}>Ask Islamic Scholar</h2>
 
-      <p style={{ fontFamily: "serif", fontSize: 20, color: G, margin: "0 0 14px", direction: "rtl", lineHeight: 1.8 }}>
+      <p style={{ fontFamily: "Amiri Quran, serif", fontSize: 18, color: SC.softGold, margin: "0 0 16px", direction: "rtl", lineHeight: 1.8 }}>
         بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
       </p>
 
-      <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.7, maxWidth: 460, margin: "0 0 28px" }}>
-        Ask about the prophetic tradition. Every answer is grounded in authentic hadith literature with full citations and references.
+      <p style={{ fontSize: 15, color: SC.textWarm, lineHeight: 1.7, maxWidth: 480, margin: "0 0 32px", fontStyle: "italic" }}>
+        Ask questions about the Qur'an, Hadith, Islamic teachings, or personal spiritual guidance.
       </p>
 
       <div style={{
         display: "grid", gridTemplateColumns: "1fr 1fr",
-        gap: 10, width: "100%", maxWidth: 600, marginBottom: 20,
+        gap: 12, width: "100%", maxWidth: 600, marginBottom: 24,
       }}>
         {SUGGESTED_QUESTIONS.map((q, i) => (
           <button
             key={i}
             onClick={() => onSuggest(q)}
             style={{
-              background: "#f0faf4",
-              border: `1px solid #bbf7d0`,
-              borderLeft: `3px solid ${G}`,
-              borderRadius: 12, padding: "11px 13px",
-              fontSize: 13, color: G, textAlign: "left",
-              cursor: "pointer", lineHeight: 1.5, transition: "all 0.18s",
-              display: "flex", alignItems: "flex-start", gap: 8,
+              background: SC.cream,
+              border: `1px solid ${SC.borderSubtle}`,
+              borderRadius: 20, padding: "16px 20px",
+              fontSize: 15, fontWeight: 500, color: SC.textDark, textAlign: "center",
+              cursor: "pointer", lineHeight: 1.5, transition: "all 0.2s ease-out",
               fontFamily: "inherit",
+              boxShadow: SC.shadowSoft,
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.background = "#dcfce7";
-              e.currentTarget.style.borderColor = G;
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,138,74,0.12)";
+              e.currentTarget.style.background = SC.ivory;
+              e.currentTarget.style.borderColor = SC.emerald;
+              e.currentTarget.style.boxShadow = SC.shadowMedium;
+              e.currentTarget.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = "#f0faf4";
-              e.currentTarget.style.borderColor = "#bbf7d0";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background = SC.cream;
+              e.currentTarget.style.borderColor = SC.borderSubtle;
+              e.currentTarget.style.boxShadow = SC.shadowSoft;
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             <span>{q}</span>
@@ -266,13 +276,13 @@ function WelcomeScreen({ onSuggest }) {
       </div>
 
       <div style={{
-        display: "flex", gap: 8, alignItems: "flex-start",
-        background: "#f0faf4", border: `1px solid #bbf7d0`,
-        borderRadius: 10, padding: "10px 14px",
-        fontSize: 12, color: "#166534", maxWidth: 460, textAlign: "left", lineHeight: 1.5,
+        display: "flex", gap: 10, alignItems: "flex-start",
+        background: SC.ivory, border: `1px solid ${SC.borderSubtle}`,
+        borderRadius: 8, padding: "12px 16px",
+        fontSize: 13, color: SC.textWarm, maxWidth: 480, textAlign: "left", lineHeight: 1.6,
       }}>
-        <InfoIcon color="#166534" size={16} />
-        <span>Scholarly only answers from hadith sources. Questions outside this scope will be gently redirected.</span>
+        <InfoIcon color={SC.forestGreen} size={16} />
+        <span>Scholarly only answers from authenticated hadith sources. For personal matters, always consult a qualified Islamic scholar.</span>
       </div>
     </div>
   );
@@ -373,43 +383,54 @@ export default function ScholarlyPage() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: T.bgPage, fontFamily: "inherit", paddingBottom: 58 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: SC.parchment, fontFamily: "inherit", paddingBottom: 58 }}>
       <style>{`
         @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
         .input-wrap { transition: border-color 0.2s, box-shadow 0.2s; }
-        .send-btn:hover:not(:disabled) { background: ${T.greenDark} !important; }
+        .send-btn:hover:not(:disabled) { background: ${SC.forestGreen} !important; }
       `}</style>
 
-      {/* ── Clean header ── */}
+      {/* ── Premium Header ── */}
       <header style={{
         flexShrink: 0,
-        background: T.bgCard,
-        borderBottom: `1px solid ${T.border}`,
+        background: SC.cream,
+        borderBottom: `1px solid ${SC.borderSubtle}`,
       }}>
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "13px 20px",
+          padding: "14px 20px",
         }}>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: T.textPrimary }}>Scholarly.AI</div>
-            <div style={{ fontSize: 11, color: T.textTertiary, marginTop: 1 }}>Hadith-based Islamic Knowledge</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: SC.forestGreen }}>Scholarly.AI</div>
+            <div style={{ fontSize: 11, color: SC.textLight, marginTop: 2 }}>Hadith-based guidance</div>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {messages.length > 0 && (
               <button onClick={clearChat} style={{
-                background: "transparent", border: `1px solid ${T.border}`,
-                color: T.textSecondary, fontSize: 12, padding: "5px 12px",
-                borderRadius: T.radiusFull, cursor: "pointer", fontFamily: "inherit",
-              }}>New Chat</button>
+                background: "transparent", border: `1px solid ${SC.borderSubtle}`,
+                color: SC.textWarm, fontSize: 12, padding: "6px 14px",
+                borderRadius: 999, cursor: "pointer", fontFamily: "inherit",
+                transition: "all 0.2s ease-out",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = SC.forestGreen;
+                e.currentTarget.style.color = SC.forestGreen;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = SC.borderSubtle;
+                e.currentTarget.style.color = SC.textWarm;
+              }}>
+                New Chat
+              </button>
             )}
           </div>
         </div>
       </header>
 
       {/* ── Chat area ── */}
-      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: T.bgPage }}>
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", background: SC.parchment }}>
         {messages.length === 0 ? (
           <WelcomeScreen onSuggest={sendMessage} />
         ) : (
@@ -422,20 +443,24 @@ export default function ScholarlyPage() {
         )}
       </div>
 
-      {/* ── Input bar ── */}
+      {/* ── Floating Input Pill ── */}
       <div style={{
-        flexShrink: 0, padding: "12px 20px 10px",
-        background: T.bgCard, borderTop: `1px solid ${T.border}`,
+        flexShrink: 0, padding: "12px 20px",
+        paddingBottom: `calc(10px + env(safe-area-inset-bottom, 0px))`,
+        background: `rgba(248,245,239,0.95)`,
+        backdropFilter: "blur(8px)",
+        borderTop: `1px solid ${SC.borderSubtle}`,
       }}>
         <div
           className="input-wrap"
           style={{
-            display: "flex", gap: 10, alignItems: "flex-end",
+            display: "flex", gap: 8, alignItems: "flex-end",
             maxWidth: 700, margin: "0 auto",
-            background: T.bgInset,
-            border: `1.5px solid ${inputFocused ? G : T.border}`,
-            borderRadius: T.radiusMd, padding: "0 10px 0 0",
-            boxShadow: inputFocused ? `0 0 0 3px rgba(26,138,74,0.08)` : "none",
+            background: SC.cream,
+            border: `1px solid ${inputFocused ? SC.forestGreen : SC.borderSubtle}`,
+            borderRadius: 24, padding: "0 8px 0 0",
+            boxShadow: inputFocused ? `0 0 0 3px rgba(22,60,47,0.1)` : SC.shadowSoft,
+            transition: "all 0.2s ease-out",
           }}
         >
           <textarea
@@ -445,15 +470,15 @@ export default function ScholarlyPage() {
             onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             onFocus={() => setInputFocused(true)}
             onBlur={() => setInputFocused(false)}
-            placeholder="Ask about hadith, Sunnah, or prophetic guidance..."
+            placeholder="Ask your question…"
             disabled={isLoading}
             rows={1}
             style={{
               flex: 1, border: "none", background: "transparent",
-              fontSize: 14, color: "#111827", outline: "none",
+              fontSize: 15, color: SC.textDark, outline: "none",
               lineHeight: 1.5, resize: "none", fontFamily: "inherit",
-              padding: "16px 8px 16px 18px",
-              minHeight: 52, maxHeight: 160, overflow: "hidden",
+              padding: "14px 12px 14px 18px",
+              minHeight: 48, maxHeight: 140, overflow: "hidden",
             }}
             onInput={e => {
               e.target.style.height = "auto";
@@ -465,15 +490,17 @@ export default function ScholarlyPage() {
             disabled={!input.trim() || isLoading}
             className="send-btn"
             style={{
-              flexShrink: 0, width: 38, height: 38,
-              marginBottom: 8,
-              background: G,
-              color: "#fff", border: "none", borderRadius: 10,
+              flexShrink: 0, width: 36, height: 36,
+              marginBottom: 6,
+              background: SC.forestGreen,
+              color: "#fff", border: "none", borderRadius: 8,
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: isLoading ? "not-allowed" : "pointer",
-              opacity: !input.trim() || isLoading ? 0.55 : 1,
-              transition: "opacity 0.18s, background 0.18s",
+              opacity: !input.trim() || isLoading ? 0.5 : 1,
+              transition: "all 0.18s ease-out",
             }}
+            onMouseEnter={e => !isLoading && !input.trim() && (e.currentTarget.style.transform = "scale(1.05)")}
+            onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
           >
             {isLoading ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -490,9 +517,6 @@ export default function ScholarlyPage() {
             )}
           </button>
         </div>
-        <p style={{ textAlign: "center", fontSize: 11, color: T.textTertiary, margin: "7px auto 0", maxWidth: 700 }}>
-          Scholarly answers exclusively from authenticated hadith. Always consult a qualified scholar for personal matters.
-        </p>
       </div>
 
       <BottomNav />

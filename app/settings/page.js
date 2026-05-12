@@ -2,7 +2,7 @@
 
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { T } from "../../lib/theme.js";
 import BottomNav from "../components/BottomNav.js";
 
@@ -49,11 +49,17 @@ function CheckoutBanner() {
 
 function SettingsContent() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [subscription, setSubscription] = useState(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
   useEffect(() => {
+    if (isLoaded && !user) {
+      router.push("/sign-in");
+      return;
+    }
+    if (!isLoaded || !user) return;
     fetch("/api/stripe/subscription-status")
       .then((r) => r.json())
       .then(({ plan }) => setSubscription(plan ?? "FREE"))
@@ -153,7 +159,7 @@ function SettingsContent() {
             </div>
           </div>
         </div>
-        <SignOutButton>
+        <SignOutButton redirectUrl="/sign-in">
           <button
             style={{
               padding: "9px 18px",

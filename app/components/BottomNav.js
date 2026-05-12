@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { T } from "../../lib/theme";
 
 const NAV_ITEMS = [
-  { label: "Home",    href: "/",          icon: HomeIcon    },
-  { label: "Learn",   href: "/hifz",      icon: LearnIcon   },
-  { label: "Ask",     href: "/scholarly", icon: AskIcon     },
-  { label: "Library", href: "/library",   icon: LibraryIcon },
+  { label: "Home",     href: "/",          icon: HomeIcon     },
+  { label: "Quran",    href: "/quran",     icon: QuranIcon    },
+  { label: "Ask",      href: "/scholarly", icon: AskIcon      },
+  { label: "Hadith",   href: "/hadith",    icon: HadithIcon   },
+  { label: "Settings", href: "/settings",  icon: SettingsIcon },
 ];
 
 function HomeIcon({ active }) {
@@ -22,7 +23,7 @@ function HomeIcon({ active }) {
   );
 }
 
-function LearnIcon({ active }) {
+function QuranIcon({ active }) {
   const c = active ? T.green : T.textTertiary;
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -30,6 +31,7 @@ function LearnIcon({ active }) {
       <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"
         stroke={c} strokeWidth="1.8" strokeLinejoin="round"
         fill={active ? T.greenMuted : "none"} />
+      <path d="M9 7h6M9 11h4" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -46,18 +48,29 @@ function AskIcon({ active }) {
   );
 }
 
-function LibraryIcon({ active }) {
+function SettingsIcon({ active }) {
   const c = active ? T.green : T.textTertiary;
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <rect x="3"  y="3"  width="7" height="7" rx="1.5" stroke={c} strokeWidth="1.8"
+      <circle cx="12" cy="12" r="3" stroke={c} strokeWidth="1.8"
         fill={active ? T.greenMuted : "none"} />
-      <rect x="14" y="3"  width="7" height="7" rx="1.5" stroke={c} strokeWidth="1.8"
+      <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+        stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function HadithIcon({ active }) {
+  const c = active ? T.green : T.textTertiary;
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <path d="M8 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2h-2"
+        stroke={c} strokeWidth="1.8" strokeLinecap="round"
         fill={active ? T.greenMuted : "none"} />
-      <rect x="3"  y="14" width="7" height="7" rx="1.5" stroke={c} strokeWidth="1.8"
+      <path d="M8 3a2 2 0 012-2h4a2 2 0 012 2v1H8V3z"
+        stroke={c} strokeWidth="1.8" strokeLinejoin="round"
         fill={active ? T.greenMuted : "none"} />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke={c} strokeWidth="1.8"
-        fill={active ? T.greenMuted : "none"} />
+      <path d="M9 12h6M9 16h4" stroke={c} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
